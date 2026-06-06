@@ -16,8 +16,8 @@ export default function BeforeAfterSlider({
   return (
     <div className="relative w-full overflow-hidden rounded-3xl">
       <img
-        src={after}
-        alt="Après"
+        src={before}
+        alt="Avant"
         className="w-full block"
       />
 
@@ -26,8 +26,8 @@ export default function BeforeAfterSlider({
         style={{ width: `${position}%` }}
       >
         <img
-          src={before}
-          alt="Avant"
+          src={after}
+          alt="Après"
           className="w-full block"
         />
       </div>
