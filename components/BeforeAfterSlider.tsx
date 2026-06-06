@@ -11,7 +11,7 @@ export default function BeforeAfterSlider({
   before,
   after,
 }: Props) {
-  const [position, setPosition] = useState(50);
+  const [position, setPosition] = useState(0);
 
   return (
     <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-3xl">
