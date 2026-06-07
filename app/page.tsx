@@ -85,6 +85,37 @@ export default function Home() {
       </div>
     </div>
   </section>
+  {/* STATS */}
+<section className="max-w-7xl mx-auto px-6 py-10">
+  <div className="grid md:grid-cols-3 gap-6">
+    <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100">
+      <p className="text-5xl font-black text-purple-600 mb-2">
+        1 min
+      </p>
+      <p className="text-gray-600 font-medium">
+        pour envoyer une photo
+      </p>
+    </div>
+
+    <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100">
+      <p className="text-5xl font-black text-purple-600 mb-2">
+        IA
+      </p>
+      <p className="text-gray-600 font-medium">
+        restauration automatique
+      </p>
+    </div>
+
+    <div className="bg-white rounded-3xl p-8 text-center shadow-sm border border-gray-100">
+      <p className="text-5xl font-black text-purple-600 mb-2">
+        HD
+      </p>
+      <p className="text-gray-600 font-medium">
+        export prêt à imprimer
+      </p>
+    </div>
+  </div>
+</section>
 {/* ALBUMS */}
 <section className="max-w-7xl mx-auto px-6 py-24">
   <div className="grid lg:grid-cols-2 gap-16 items-center">
