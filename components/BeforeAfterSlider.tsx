@@ -7,60 +7,56 @@ type Props = {
   after: string;
 };
 
-export default function BeforeAfterSlider({
-  before,
-  after,
-}: Props) {
-  const [position, setPosition] = useState(0);
+export default function BeforeAfterSlider({ before, after }: Props) {
+  const [position, setPosition] = useState(50);
 
   return (
-    <div className="relative w-full max-w-6xl mx-auto overflow-hidden rounded-3xl">
-      
-      {/* IMAGE AVANT */}
+    <div className="relative w-full overflow-hidden rounded-[1.5rem] bg-black select-none">
       <img
         src={before}
         alt="Avant"
-        className="w-full h-auto block"
+        className="w-full h-full object-cover block"
       />
 
-      {/* IMAGE APRÈS */}
       <div
-        className="absolute top-0 left-0 h-full overflow-hidden"
+        className="absolute inset-y-0 left-0 overflow-hidden"
         style={{ width: `${position}%` }}
       >
         <img
           src={after}
           alt="Après"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover block"
         />
       </div>
 
-      {/* LIGNE DU CURSEUR */}
       <div
-        className="absolute top-0 bottom-0 w-1 bg-white"
+        className="absolute top-0 bottom-0 w-1 bg-white z-20"
         style={{ left: `${position}%` }}
       />
 
-      {/* CURSEUR */}
+      <div
+        className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-30 w-12 h-12 rounded-full bg-white shadow-xl flex items-center justify-center font-bold text-gray-700"
+        style={{ left: `${position}%` }}
+      >
+        ↔
+      </div>
+
       <input
         type="range"
         min="0"
         max="100"
         value={position}
-        onChange={(e) =>
-          setPosition(Number(e.target.value))
-        }
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 w-2/3"
+        onChange={(e) => setPosition(Number(e.target.value))}
+        className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-40"
       />
 
-      {/* LABELS */}
-      <div className="absolute top-4 left-4 bg-black text-white px-4 py-2 rounded-full">
-        Avant
-      </div>
+      <span className="absolute top-4 left-4 z-30 bg-purple-600 text-white px-4 py-2 rounded-xl text-sm font-bold">
+        APRÈS
+      </span>
 
-      <div className="absolute top-4 right-4 bg-black text-white px-4 py-2 rounded-full">
-        Après
-      </div>
+      <span className="absolute top-4 right-4 z-30 bg-black/80 text-white px-4 py-2 rounded-xl text-sm font-bold">
+        AVANT
+      </span>
     </div>
   );
 }
