@@ -1,17 +1,31 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white text-black overflow-hidden">
+  
+    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
+      {/* BACKGROUND PREMIUM */}
+<div className="absolute inset-0 overflow-hidden pointer-events-none">
+
+  <div className="absolute top-0 left-[-10%] w-[700px] h-[700px] bg-purple-300/20 rounded-full blur-3xl" />
+
+  <div className="absolute top-[30%] right-[-10%] w-[600px] h-[600px] bg-pink-300/20 rounded-full blur-3xl" />
+
+  <div className="absolute bottom-0 left-[20%] w-[500px] h-[500px] bg-blue-200/20 rounded-full blur-3xl" />
+
+</div>
   {/* NAVBAR */}
-  <nav className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-50">
+  <nav className="sticky top-0 z-50 border-b border-white/20 bg-white/60 backdrop-blur-2xl shadow-sm">
     <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
       <Link href="/" className="text-2xl font-bold">
         Mémoire Vivante
       </Link>
 
-      <div className="hidden md:flex items-center gap-8 font-medium text-gray-700">
+      <div className="hidden md:flex items-center gap-8 font-medium text-gray-600">
         <a href="#fonctionnalites">Fonctionnalités</a>
         <a href="#tarifs">Tarifs</a>
         <Link href="/gallery">Galerie</Link>
@@ -19,72 +33,90 @@ export default function Home() {
 
       <Link
         href="/upload"
-        className="px-5 py-3 rounded-xl bg-black text-white font-semibold"
+        className="px-5 py-3 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:scale-105 transition duration-300"
       >
         Restaurer une photo
       </Link>
     </div>
   </nav>
-
+    
   {/* HERO PREMIUM */}
-  <section className="relative">
-    <div className="absolute inset-0 bg-gradient-to-br from-purple-50 via-white to-pink-50" />
-    <div className="absolute -top-24 right-0 w-[500px] h-[500px] bg-purple-300/30 blur-3xl rounded-full" />
+<section className="relative">
+  <div className="absolute inset-0 bg-gradient-to-br from-purple-200/50 via-white to-pink-200/50" />
 
-    <div className="relative max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
-      <div>
-        <div className="inline-flex items-center gap-2 bg-white shadow-sm rounded-full px-4 py-2 mb-8">
-          <span className="w-3 h-3 bg-green-400 rounded-full" />
-          <span className="text-sm font-semibold text-gray-700">
-            Restauration photo par intelligence artificielle
-          </span>
-        </div>
+  <div className="absolute -top-24 right-0 w-[500px] h-[500px] bg-purple-300/30 blur-3xl rounded-full" />
 
-        <h1 className="text-5xl md:text-7xl font-black leading-tight mb-8">
-          Redonnez vie à vos{" "}
-          <span className="text-purple-600">souvenirs</span>
-        </h1>
+  <div className="relative max-w-7xl mx-auto px-6 py-24 grid lg:grid-cols-2 gap-16 items-center">
 
-        <p className="text-2xl font-bold text-gray-900 mb-6">
-  Restaurez les souvenirs de votre famille et créez un album photo prêt à imprimer et à transmettre aux générations futures.
-</p>
+    {/* TEXTE HERO */}
+    <motion.div
+      initial={{ opacity: 0, y: 40 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8 }}
+    >
+      <div className="inline-flex items-center gap-2 bg-white shadow-sm rounded-full px-4 py-2 mb-8">
+        <span className="w-3 h-3 bg-green-400 rounded-full" />
 
-       <div className="grid sm:grid-cols-2 gap-4 mb-10 text-gray-700 font-medium">
-  <p>✨ Restauration haute qualité</p>
-  <p>🎨 Colorisation intelligente</p>
-  <p>📚 Création d’albums souvenirs</p>
-  <p>🖨️ Photos prêtes à imprimer</p>
-</div>
-
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link
-            href="/upload"
-            className="px-8 py-5 rounded-2xl bg-purple-600 text-white font-bold text-lg shadow-xl shadow-purple-300 hover:bg-purple-700 transition"
-          >
-            Restaurer mes photos maintenant
-          </Link>
-
-          <Link
-            href="/gallery"
-            className="px-8 py-5 rounded-2xl bg-white border border-gray-200 font-bold text-lg shadow-sm"
-          >
-            Voir la galerie
-          </Link>
-        </div>
+        <span className="text-sm font-semibold text-gray-600">
+          Restauration photo par intelligence artificielle
+        </span>
       </div>
 
-      <div className="relative">
-        <div className="absolute -inset-4 bg-purple-500 rounded-[2rem] blur-xl opacity-20" />
+      <h1 className="text-5xl md:text-7xl font-black leading-tight mb-8">
+        Redonnez vie à vos{" "}
+        <span className="text-purple-600">
+          souvenirs
+        </span>
+      </h1>
 
-        <div className="relative bg-purple-600 p-2 rounded-[2rem] shadow-2xl">
-          <BeforeAfterSlider
-            before="https://replicate.delivery/mgxm/b033ff07-1d2e-4768-a137-6c16b5ed4bed/d_1.png"
-            after="https://replicate.delivery/xezq/VjZzUS8uxOobNpyJzFebvWiuUa3Bzs60RQOexLVQIOuewckpA/tmpio8e0bce.png"
-          />
-        </div>
+      <p className="text-2xl font-bold text-gray-900 mb-6">
+        Restaurez les souvenirs de votre famille et créez un album photo prêt à imprimer et à transmettre aux générations futures.
+      </p>
+
+      <div className="grid sm:grid-cols-2 gap-4 mb-10 text-gray-700 font-medium">
+        <p>✨ Restauration haute qualité</p>
+        <p>🎨 Colorisation intelligente</p>
+        <p>📚 Création d’albums souvenirs</p>
+        <p>🖨️ Photos prêtes à imprimer</p>
       </div>
-    </div>
-  </section>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <Link
+          href="/upload"
+          className="px-8 py-5 rounded-2xl bg-purple-600 text-white font-bold text-lg shadow-xl shadow-purple-300 hover:bg-purple-700 transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
+        >
+          Restaurer mes photos maintenant
+        </Link>
+
+        <Link
+          href="/gallery"
+          className="px-8 py-5 rounded-2xl bg-white border border-gray-200 font-bold text-lg shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+        >
+          Voir la galerie
+        </Link>
+      </div>
+    </motion.div>
+
+    {/* SLIDER */}
+    <motion.div
+      className="relative"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 1 }}
+    >
+      <div className="absolute -inset-4 bg-purple-500 rounded-[2rem] blur-xl opacity-20" />
+
+      <div className="relative bg-purple-600 p-2 rounded-[2rem] shadow-2xl">
+        <BeforeAfterSlider
+          before="https://replicate.delivery/mgxm/b033ff07-1d2e-4768-a137-6c16b5ed4bed/d_1.png"
+          after="https://replicate.delivery/xezq/VjZzUS8uxOobNpyJzFebvWiuUa3Bzs60RQOexLVQIOuewckpA/tmpio8e0bce.png"
+        />
+      </div>
+    </motion.div>
+
+  </div>
+</section>
+
   {/* STATS */}
 <section className="max-w-7xl mx-auto px-6 py-10">
   <div className="grid md:grid-cols-3 gap-6">
@@ -117,7 +149,13 @@ export default function Home() {
   </div>
 </section>
 {/* ALBUMS */}
-<section className="max-w-7xl mx-auto px-6 py-24">
+<motion.section
+ className="relative z-10 max-w-7xl mx-auto px-6 py-24"
+  initial={{ opacity: 0, y: 100 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.1 }}
+>
   <div className="grid lg:grid-cols-2 gap-16 items-center">
 
     {/* TEXTE */}
@@ -137,19 +175,19 @@ export default function Home() {
 
       <div className="grid sm:grid-cols-2 gap-6 text-gray-700 font-medium">
 
-        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
           ✨ Restauration intelligente
         </div>
 
-        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
           📚 Organisation des souvenirs
         </div>
 
-        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
           🖨️ Album prêt à imprimer
         </div>
 
-        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+        <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
           ❤️ Transmission familiale
         </div>
 
@@ -169,7 +207,7 @@ export default function Home() {
 
   </div>
 
-</section>
+</motion.section>
       {/* PROCESSUS */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <h2 className="text-4xl font-bold text-center mb-12">
@@ -217,8 +255,13 @@ export default function Home() {
         </div>
       </section>
 {/* TÉMOIGNAGES */}
-<section className="max-w-7xl mx-auto px-6 py-24">
-  <div className="text-center mb-16">
+<motion.section
+  className="relative z-10 max-w-7xl mx-auto px-6 py-24"
+  initial={{ opacity: 0, y: 100 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.1 }}
+  >
     <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
       Souvenirs restaurés
     </span>
@@ -231,10 +274,10 @@ export default function Home() {
       Mémoire Vivante aide les familles à préserver leurs photos anciennes
       et à les transformer en souvenirs durables.
     </p>
-  </div>
+  
 
   <div className="grid md:grid-cols-3 gap-8">
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
       <p className="text-gray-700 mb-6">
         “J’ai pu restaurer une photo de mariage de mes grands-parents. Le résultat est émouvant.”
       </p>
@@ -242,7 +285,7 @@ export default function Home() {
       <p className="text-sm text-gray-500">Album familial</p>
     </div>
 
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
       <p className="text-gray-700 mb-6">
         “Les photos étaient abîmées depuis des années. L’IA leur a donné une vraie seconde vie.”
       </p>
@@ -250,7 +293,7 @@ export default function Home() {
       <p className="text-sm text-gray-500">Restauration photo</p>
     </div>
 
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
       <p className="text-gray-700 mb-6">
         “L’idée de pouvoir ensuite créer un album imprimé est exactement ce que je cherchais.”
       </p>
@@ -258,10 +301,16 @@ export default function Home() {
       <p className="text-sm text-gray-500">Souvenirs famille</p>
     </div>
   </div>
-</section>
+</motion.section>
       {/* TARIFS */}
-<section id="tarifs" className="max-w-7xl mx-auto px-6 py-24">
-  <div className="text-center mb-16">
+<motion.section
+  className="relative z-10 max-w-7xl mx-auto px-6 py-24"
+  initial={{ opacity: 0, y: 100 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true }}
+  transition={{ duration: 1.1 }}
+>
+  <div className="max-w-3xl mb-16">
     <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
       Tarifs
     </span>
@@ -278,7 +327,7 @@ export default function Home() {
   <div className="grid md:grid-cols-3 gap-8">
 
     {/* CARD 1 */}
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-gray-100 transition duration-300 hover:-translate-y-2 hover:shadow-xl">
       <h3 className="text-2xl font-bold mb-4">
         Découverte
       </h3>
@@ -339,10 +388,10 @@ export default function Home() {
     </div>
 
   </div>
-</section>
+</motion.section>
 {/* FAQ */}
-<section className="max-w-5xl mx-auto px-6 py-24">
-  <div className="text-center mb-16">
+<section className="relative z-10 max-w-7xl mx-auto px-6 py-24">
+ <div className="max-w-3xl mb-16">
     <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
       Questions fréquentes
     </span>
@@ -394,7 +443,20 @@ export default function Home() {
           Commencer maintenant
         </Link>
       </section>
+      {/* FOOTER */}
+      <footer className="relative z-10 border-t border-white/40 bg-white/50 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-4">
+          <p className="font-bold text-xl">Mémoire Vivante</p>
 
+          <p className="text-gray-600 text-sm">
+            Restaurez, transmettez et imprimez vos souvenirs familiaux.
+          </p>
+
+          <p className="text-gray-400 text-sm">
+            © 2026 Mémoire Vivante
+          </p>
+        </div>
+      </footer>
     </main>
-  );
+);
 }

@@ -15,7 +15,7 @@ export default function BeforeAfterSlider({ before, after }: Props) {
       <img
         src={before}
         alt="Avant"
-        className="w-full h-full object-cover block"
+        className="w-full h-full object-cover block transition duration-700 hover:scale-105"
       />
 
       <div
@@ -25,7 +25,7 @@ export default function BeforeAfterSlider({ before, after }: Props) {
         <img
           src={after}
           alt="Après"
-          className="w-full h-full object-cover block"
+          className="w-full h-full object-cover block transition duration-700 hover:scale-105"
         />
       </div>
 
