@@ -11,7 +11,9 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   useEffect(() => {
     async function redirectIfLoggedIn() {
@@ -77,6 +79,28 @@ export default function LoginPage() {
     router.push("/dashboard");
   }
 
+  async function resetPassword() {
+    if (!email) {
+      alert("Veuillez renseigner votre email pour réinitialiser le mot de passe.");
+      return;
+    }
+
+    setResetLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+
+    setResetLoading(false);
+
+    if (error) {
+      alert(error.message);
+      return;
+    }
+
+    alert("Un lien de réinitialisation vient d'être envoyé par email.");
+  }
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6]">
       <section className="flex min-h-screen items-center justify-center p-6">
@@ -102,13 +126,37 @@ export default function LoginPage() {
               className="w-full px-5 py-4 rounded-xl border border-gray-200"
             />
 
-            <input
-              type="password"
-              placeholder="Mot de passe"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-5 py-4 rounded-xl border border-gray-200"
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Mot de passe"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-xl border border-gray-200 px-5 py-4 pr-14"
+              />
+
+              <button
+                type="button"
+                aria-label={
+                  showPassword
+                    ? "Masquer le mot de passe"
+                    : "Afficher le mot de passe"
+                }
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xl text-gray-500 hover:text-black"
+              >
+                {showPassword ? "🙈" : "👁"}
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={resetPassword}
+              disabled={resetLoading}
+              className="block text-sm font-bold text-purple-700 hover:text-purple-900 disabled:opacity-60"
+            >
+              {resetLoading ? "Envoi du lien..." : "Mot de passe oublié ?"}
+            </button>
 
             <button
               onClick={signIn}

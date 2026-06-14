@@ -3,6 +3,7 @@ import Link from "next/link";
 const quickLinks = [
   { label: "Restaurer une photo", href: "/upload" },
   { label: "Mes photos", href: "/gallery" },
+  { label: "Créer un album", href: "/album" },
   { label: "Tableau de bord", href: "/dashboard" },
 ];
 

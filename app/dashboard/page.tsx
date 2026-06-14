@@ -68,6 +68,38 @@ export default function DashboardPage() {
           </p>
         </div>
 
+        <div className="grid lg:grid-cols-2 gap-6 mb-10">
+          <Link
+            href="/upload"
+            className="bg-gradient-to-br from-purple-600 to-pink-500 text-white rounded-[2rem] p-8 sm:p-10 shadow-2xl transition hover:-translate-y-1"
+          >
+            <p className="inline-block rounded-full bg-white/20 px-4 py-2 text-sm font-black mb-6">
+              Action principale
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">
+              Restaurer une photo
+            </h2>
+            <p className="text-white/80 text-lg">
+              Importez une photo ancienne et ajoutez-la à votre futur album souvenir.
+            </p>
+          </Link>
+
+          <Link
+            href="/gallery"
+            className="bg-white/85 backdrop-blur-xl rounded-[2rem] p-8 sm:p-10 shadow-sm border border-white/60 transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            <p className="inline-block rounded-full bg-purple-100 px-4 py-2 text-sm font-black text-purple-700 mb-6">
+              Galerie privée
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">
+              Mes photos
+            </h2>
+            <p className="text-gray-600 text-lg">
+              Retrouvez vos photos restaurées, téléchargez-les ou supprimez-les.
+            </p>
+          </Link>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
             <p className="text-sm font-semibold text-gray-500 mb-3">
@@ -99,37 +131,16 @@ export default function DashboardPage() {
 
         <div className="grid md:grid-cols-3 gap-6">
           <Link
-            href="/upload"
-            className="bg-black text-white rounded-[2rem] p-8 shadow-xl transition hover:-translate-y-1"
+            href="/album"
+            className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60 transition hover:-translate-y-1 hover:shadow-xl"
           >
-            <h2 className="text-2xl font-bold mb-3">
-              Restaurer une photo
-            </h2>
-            <p className="text-white/70">
-              Lancez une nouvelle restauration IA.
-            </p>
-          </Link>
-
-          <Link
-            href="/gallery"
-            className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60 transition hover:-translate-y-1"
-          >
-            <h2 className="text-2xl font-bold mb-3">
-              Ouvrir la galerie
-            </h2>
-            <p className="text-gray-600">
-              Retrouvez vos photos restaurées.
-            </p>
-          </Link>
-
-          <div className="bg-white/60 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60 opacity-80">
             <h2 className="text-2xl font-bold mb-3">
               Créer un album
             </h2>
             <p className="text-gray-600">
-              Disponible dans une prochaine étape.
+              Sélectionnez vos photos restaurées et préparez une maquette.
             </p>
-          </div>
+          </Link>
         </div>
       </section>
 
