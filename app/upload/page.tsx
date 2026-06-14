@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
+import WatermarkedImage from "@/components/WatermarkedImage";
 import { downloadRestoration } from "@/lib/downloadRestoration";
 import { supabase } from "@/lib/supabase";
 
@@ -44,34 +45,6 @@ const demoSamples = [
       "https://replicate.delivery/xezq/VjZzUS8uxOobNpyJzFebvWiuUa3Bzs60RQOexLVQIOuewckpA/tmpio8e0bce.png",
   },
 ];
-
-function WatermarkedImage({
-  src,
-  alt,
-}: {
-  src: string;
-  alt: string;
-}) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-black/5">
-      <img
-        src={src}
-        alt={alt}
-        className="w-full max-h-[560px] object-contain"
-      />
-
-      <div className="pointer-events-none absolute inset-0 flex -rotate-12 items-center justify-center">
-        <span className="rounded-2xl border border-white/50 bg-black/25 px-8 py-4 text-2xl sm:text-4xl font-black uppercase tracking-[0.25em] text-white/80 backdrop-blur-sm">
-          Mémoire Vivante
-        </span>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-4 right-4 rounded-full bg-white/90 px-4 py-2 text-xs font-black text-gray-700 shadow-sm">
-        Aperçu gratuit filigrané
-      </div>
-    </div>
-  );
-}
 
 export default function UploadPage() {
   const [preview, setPreview] = useState<string | null>(null);
@@ -236,6 +209,7 @@ export default function UploadPage() {
                 ))}
               </div>
             </div>
+
           </aside>
 
           <div className="space-y-8">
@@ -300,111 +274,152 @@ export default function UploadPage() {
             </label>
 
             {preview && (
-              <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-                  <div>
-                    <p className="text-sm font-bold text-purple-700 mb-1">
-                      {demoTitle ? "Exemple sélectionné" : "Photo sélectionnée"}
-                    </p>
-                    <h2 className="text-2xl font-black">
-                      {demoTitle ?? file?.name ?? "Photo originale"}
-                    </h2>
+              <div className="space-y-5">
+                <div className="grid xl:grid-cols-2 gap-5 items-start">
+                  <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
+                    <div className="mb-3">
+                      <div>
+                        <p className="text-sm font-bold text-purple-700 mb-1">
+                          {demoTitle ? "Exemple sélectionné" : "Photo téléchargée"}
+                        </p>
+                        <h2 className="text-2xl font-black">
+                          {demoTitle ?? file?.name ?? "Photo originale"}
+                        </h2>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <img
+                        src={preview}
+                        alt="Photo originale sélectionnée"
+                        className="h-[360px] w-full rounded-2xl object-contain bg-black/5"
+                      />
+                      <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-gray-600 shadow-sm">
+                        Avant
+                      </span>
+                    </div>
                   </div>
 
-                  <span className="rounded-2xl bg-purple-100 px-4 py-2 text-sm font-bold text-purple-700">
-                    Original
-                  </span>
-                </div>
+                  <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
+                    <div className="mb-3">
+                      <div>
+                        <p
+                          className={`text-sm font-bold mb-1 ${
+                            restoredImage ? "text-green-700" : "text-gray-500"
+                          }`}
+                        >
+                          {restoredImage ? "Restauration terminée" : "Résultat IA"}
+                        </p>
+                        <h2 className="text-2xl font-black">
+                          Photo restaurée
+                        </h2>
+                      </div>
+                    </div>
 
-                <img
-                  src={preview}
-                  alt="Photo originale sélectionnée"
-                  className="w-full max-h-[560px] rounded-2xl object-contain bg-black/5"
-                />
-
-                <button
-                  onClick={uploadToSupabase}
-                  disabled={loading || !file}
-                  className="mt-6 w-full px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-2xl font-black text-lg shadow-lg disabled:opacity-60"
-                >
-                  {loading ? "Restauration en cours..." : "Restaurer et ajouter à mon album"}
-                </button>
-
-                {!file && demoTitle && (
-                  <p className="mt-4 text-center text-sm font-semibold text-gray-500">
-                    Cet exemple est déjà restauré pour vous montrer le rendu gratuit.
-                  </p>
-                )}
-
-                {loading && (
-                  <p className="mt-4 text-center text-sm font-semibold text-gray-500">
-                    Votre photo est envoyée, restaurée puis enregistrée dans la galerie.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {restoredImage && (
-              <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
-                  <div>
-                    <p className="text-sm font-bold text-green-700 mb-1">
-                      Restauration terminée
-                    </p>
-                    <h2 className="text-2xl font-black">
-                      Photo prête pour votre album
-                    </h2>
+                    {restoredImage ? (
+                      isWatermarkedPreview ? (
+                        <div className="relative">
+                          <WatermarkedImage
+                            src={restoredImage}
+                            alt="Photo restaurée avec filigrane"
+                            className="h-[360px]"
+                          />
+                          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-green-700 shadow-sm">
+                            Après
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <img
+                            src={restoredImage}
+                            alt="Photo restaurée"
+                            className="h-[360px] w-full rounded-2xl object-contain bg-black/5"
+                          />
+                          <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-green-700 shadow-sm">
+                            Après
+                          </span>
+                        </div>
+                      )
+                    ) : (
+                      <div className="relative flex h-[360px] items-center justify-center rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/60 px-6 text-center">
+                        <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-xs font-black text-gray-500 shadow-sm">
+                          {loading ? "En cours" : "En attente"}
+                        </span>
+                        <div>
+                          <p className="text-xl font-black text-purple-700">
+                            {loading ? "Restauration en cours..." : "Prêt à restaurer"}
+                          </p>
+                          <p className="mt-2 text-sm font-semibold text-gray-500">
+                            {loading
+                              ? "Votre photo est envoyée, restaurée puis enregistrée dans la galerie."
+                              : "Cliquez sur le bouton ci-dessous pour lancer la restauration."}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  <span className="rounded-2xl bg-green-100 px-4 py-2 text-sm font-bold text-green-700">
-                    Restaurée
-                  </span>
                 </div>
 
-                {isWatermarkedPreview ? (
-                  <WatermarkedImage
-                    src={restoredImage}
-                    alt="Photo restaurée avec filigrane"
-                  />
-                ) : (
-                  <img
-                    src={restoredImage}
-                    alt="Photo restaurée"
-                    className="w-full max-h-[560px] rounded-2xl object-contain bg-black/5"
-                  />
-                )}
+                <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
+                  {file && !restoredImage && (
+                    <button
+                      onClick={uploadToSupabase}
+                      disabled={loading}
+                      className="w-full px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-2xl font-black text-lg shadow-lg disabled:opacity-60"
+                    >
+                      {loading ? "Restauration en cours..." : "Restaurer et ajouter à mon album"}
+                    </button>
+                  )}
 
-                <div className="mt-6 grid sm:grid-cols-2 gap-3">
-                  <Link
-                    href="/gallery"
-                    className="text-center px-5 py-4 rounded-2xl bg-black text-white font-bold"
-                  >
-                    Voir dans la galerie
-                  </Link>
+                  {!file && demoTitle && (
+                    <p className="text-center text-sm font-semibold text-gray-500">
+                      Cet exemple est déjà restauré pour vous montrer le rendu gratuit.
+                    </p>
+                  )}
 
-                  <button
-                    onClick={() => {
-                      if (restorationId) {
-                        downloadRestoration(restorationId);
-                      }
-                    }}
-                    disabled={!restorationId || isWatermarkedPreview}
-                    className="text-center px-5 py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold disabled:opacity-60"
-                  >
-                    HD sans filigrane bientôt
-                  </button>
+                  {restoredImage && (
+                    <>
+                      <div className="grid sm:grid-cols-3 gap-3">
+                      <Link
+                        href="/album"
+                        className="text-center px-5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold"
+                      >
+                        Ajouter à mon album
+                      </Link>
+
+                      <Link
+                        href="/gallery"
+                        className="text-center px-5 py-4 rounded-2xl bg-black text-white font-bold"
+                      >
+                        Voir la galerie
+                      </Link>
+
+                      <button
+                        onClick={() => {
+                          if (restorationId) {
+                            downloadRestoration(restorationId);
+                          }
+                        }}
+                        disabled={!restorationId || isWatermarkedPreview}
+                        className="text-center px-5 py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold disabled:opacity-60"
+                      >
+                        HD bientôt
+                      </button>
+                    </div>
+
+                      {isWatermarkedPreview && (
+                        <p className="mt-4 text-center text-sm font-semibold text-gray-500">
+                          La version gratuite reste filigranée. Les packs Stripe
+                          permettront de débloquer le téléchargement HD sans filigrane.
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
-
-                {isWatermarkedPreview && (
-                  <p className="mt-4 text-center text-sm font-semibold text-gray-500">
-                    La version gratuite reste filigranée. Les packs Stripe
-                    permettront de débloquer le téléchargement HD sans filigrane.
-                  </p>
-                )}
               </div>
             )}
           </div>
         </div>
+
       </section>
 
       <SiteFooter />

@@ -53,28 +53,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const response = await fetch(restoration.restored_url);
-
-    if (!response.ok) {
-      return NextResponse.json(
-        {
-          error: "Unable to fetch file",
-          status: response.status,
-          statusText: response.statusText,
-        },
-        { status: 500 }
-      );
-    }
-
-    const buffer = await response.arrayBuffer();
-
-    return new NextResponse(buffer, {
-      headers: {
-        "Content-Type": response.headers.get("content-type") || "image/png",
-        "Content-Disposition":
-          'attachment; filename="memoire-vivante-hd.png"',
+    return NextResponse.json(
+      {
+        error: "HD download locked",
+        message: "Le téléchargement HD sans filigrane sera débloqué avec les packs payants.",
       },
-    });
+      { status: 402 }
+    );
+
   } catch (error) {
     console.error("DOWNLOAD ERROR:", error);
 

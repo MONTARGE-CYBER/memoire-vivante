@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import BeforeAfterSlider from "@/components/BeforeAfterSlider";
-import { downloadRestoration } from "@/lib/downloadRestoration";
 import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
+import WatermarkedImage from "@/components/WatermarkedImage";
 
 type Restoration = {
   id: number;
@@ -137,17 +136,44 @@ export default function GalleryPage() {
                   </p>
                 </div>
 
-                <BeforeAfterSlider
-                  before={item.original_url}
-                  after={item.restored_url}
-                />
+                <div className="grid gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-white p-3 shadow-sm">
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="font-black">Original</p>
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-black text-gray-500">
+                          Avant
+                        </span>
+                      </div>
+                      <img
+                        src={item.original_url}
+                        alt={`Photo originale ${item.id}`}
+                        className="h-64 w-full rounded-xl object-contain bg-black/5"
+                      />
+                    </div>
+
+                    <div className="rounded-2xl bg-white p-3 shadow-sm">
+                      <div className="mb-2 flex items-center justify-between">
+                        <p className="font-black">Restaurée</p>
+                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
+                          Après
+                        </span>
+                      </div>
+                      <WatermarkedImage
+                        src={item.restored_url}
+                        alt={`Photo restaurée ${item.id} avec filigrane`}
+                        className="h-64"
+                      />
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-6 grid gap-3">
                   <button
-                    onClick={() => downloadRestoration(item.id)}
-                    className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold transition hover:scale-105"
+                    disabled
+                    className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold opacity-50"
                   >
-                    Télécharger HD
+                    HD sans filigrane bientôt
                   </button>
 
                   <Link

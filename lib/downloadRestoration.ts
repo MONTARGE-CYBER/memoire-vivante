@@ -22,6 +22,11 @@ export async function downloadRestoration(id: number) {
   });
 
   if (!response.ok) {
+    if (response.status === 402) {
+      alert("Le téléchargement HD sans filigrane sera disponible avec les packs payants.");
+      return;
+    }
+
     alert("Erreur lors du téléchargement.");
     return;
   }
