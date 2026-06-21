@@ -8,6 +8,11 @@ import SiteNav from "@/components/SiteNav";
 import { supabase } from "@/lib/supabase";
 
 type DashboardStats = {
+  latestAlbum: {
+    albumType: string;
+    title: string;
+    updatedAt: string;
+  } | null;
   email: string;
   restorationsCount: number;
 };
@@ -16,6 +21,13 @@ export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const latestAlbumDate = stats?.latestAlbum
+    ? new Intl.DateTimeFormat("fr-FR", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).format(new Date(stats.latestAlbum.updatedAt))
+    : "";
 
   useEffect(() => {
     async function loadDashboard() {
@@ -37,8 +49,27 @@ export default function DashboardPage() {
         console.error(error);
       }
 
+      const { data: latestAlbum, error: albumError } = await supabase
+        .from("albums")
+        .select("album_type, title, updated_at")
+        .eq("user_id", user.id)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (albumError) {
+        console.warn(albumError);
+      }
+
       setStats({
         email: user.email ?? "Compte utilisateur",
+        latestAlbum: latestAlbum
+          ? {
+              albumType: latestAlbum.album_type,
+              title: latestAlbum.title,
+              updatedAt: latestAlbum.updated_at,
+            }
+          : null,
         restorationsCount: count ?? 0,
       });
       setLoading(false);
@@ -58,7 +89,7 @@ export default function DashboardPage() {
           </span>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6">
-            Votre espace
+            Mon espace
           </h1>
 
           <p className="text-xl text-gray-600">
@@ -100,6 +131,25 @@ export default function DashboardPage() {
           </Link>
         </div>
 
+        <div className="mb-10">
+          <Link
+            href="/album"
+            className="block bg-white/85 backdrop-blur-xl rounded-[2rem] p-8 sm:p-10 shadow-sm border border-white/60 transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            <p className="inline-block rounded-full bg-purple-100 px-4 py-2 text-sm font-black text-purple-700 mb-6">
+              Albums
+            </p>
+            <h2 className="text-3xl sm:text-4xl font-black mb-4">
+              {stats?.latestAlbum ? "Reprendre mon album" : "Créer un album"}
+            </h2>
+            <p className="text-gray-600 text-lg">
+              {stats?.latestAlbum
+                ? `Dernier album sauvegardé : ${stats.latestAlbum.title}.`
+                : "Sélectionnez vos photos restaurées et préparez une maquette."}
+            </p>
+          </Link>
+        </div>
+
         <div className="grid md:grid-cols-3 gap-6 mb-10">
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
             <p className="text-sm font-semibold text-gray-500 mb-3">
@@ -123,24 +173,15 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-gray-500 mb-3">
               Album
             </p>
-            <p className="text-5xl font-black text-purple-600">
-              —
+            <p className="text-4xl font-black text-purple-600">
+              {loading ? "..." : stats?.latestAlbum ? "1" : "0"}
+            </p>
+            <p className="mt-3 text-sm font-semibold text-gray-500">
+              {stats?.latestAlbum
+                ? `Dernier : ${stats.latestAlbum.title} · ${latestAlbumDate}`
+                : "Aucun album sauvegardé"}
             </p>
           </div>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <Link
-            href="/album"
-            className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60 transition hover:-translate-y-1 hover:shadow-xl"
-          >
-            <h2 className="text-2xl font-bold mb-3">
-              Créer un album
-            </h2>
-            <p className="text-gray-600">
-              Sélectionnez vos photos restaurées et préparez une maquette.
-            </p>
-          </Link>
         </div>
       </section>
 
