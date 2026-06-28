@@ -12,7 +12,7 @@ export default function PolitiqueConfidentialitePage() {
         },
         {
           title: "Utilisation des données",
-          text: "Les données sont utilisées pour permettre la restauration des photos, l’accès à la galerie privée, le téléchargement des fichiers et la gestion du compte utilisateur.",
+          text: "Les données sont utilisées pour permettre la restauration des photos, l’accès à la galerie privée, la création d’exports album ou calendrier et la gestion du compte utilisateur.",
         },
         {
           title: "Suppression",

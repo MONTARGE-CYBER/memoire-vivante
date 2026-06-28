@@ -14,17 +14,17 @@ const steps = [
   },
   {
     title: "L’IA restaure l’image",
-    text: "La photo est nettoyée, améliorée et préparée en version HD pour un usage familial ou imprimable.",
+    text: "La photo est nettoyée, améliorée et préparée pour votre galerie, vos albums ou vos calendriers.",
   },
   {
     title: "Retrouvez-la dans votre galerie",
-    text: "Chaque restauration est enregistrée dans votre compte, avec téléchargement HD et suppression possible.",
+    text: "Chaque restauration est enregistrée dans votre compte, avec suppression possible et export dans vos créations.",
   },
 ];
 
 const benefits = [
   "Galerie privée par utilisateur",
-  "Téléchargement HD",
+  "Exports album et calendrier",
   "Suppression des restaurations",
   "Album personnalisé",
 ];
@@ -32,22 +32,22 @@ const benefits = [
 const plans = [
   {
     name: "Découverte",
-    price: "9€",
-    text: "Pour restaurer quelques souvenirs importants.",
-    detail: "5 photos restaurées",
+    price: "5,90€",
+    text: "Pour tester le rendu ou créer un calendrier annuel simple.",
+    detail: "5 crédits · jusqu’à 5 photos restaurées",
   },
   {
-    name: "Famille",
-    price: "29€",
-    text: "Pour numériser une petite collection familiale.",
-    detail: "20 photos + galerie privée",
+    name: "Album famille",
+    price: "19,90€",
+    text: "Pour préparer un album carré de 24 pages avec une vraie sélection familiale.",
+    detail: "25 crédits · idéal pour 25 à 30 photos",
     featured: true,
   },
   {
-    name: "Album",
-    price: "59€",
-    text: "Pour préparer une sélection prête à imprimer.",
-    detail: "Album imprimable à venir",
+    name: "Grande mémoire",
+    price: "39,90€",
+    text: "Pour restaurer une collection plus complète avant album, calendrier ou archive familiale.",
+    detail: "60 crédits · grande galerie souvenir",
   },
 ];
 
@@ -70,17 +70,27 @@ const faqs = [
   {
     question: "Est-il possible de tester gratuitement la restauration d’une photo ?",
     answer:
-      "Oui. Vous pouvez tester le rendu avec des photos proposées ou importer votre propre image. L’aperçu gratuit affiche un filigrane ; la version HD sans filigrane sera liée aux packs payants.",
+      "Oui. Vous pouvez tester le rendu avec des photos proposées ou importer votre propre image. L’aperçu gratuit affiche un filigrane ; la version sans filigrane sera débloquée avec les crédits.",
   },
   {
     question: "Puis-je télécharger mes restaurations ?",
     answer:
-      "Oui. Chaque image restaurée peut être téléchargée en HD depuis la galerie ou juste après la restauration, selon les options disponibles dans votre compte.",
+      "Vous pouvez utiliser vos restaurations dans la galerie, les albums et les calendriers. Le téléchargement sans filigrane sera réservé aux photos débloquées avec des crédits.",
+  },
+  {
+    question: "Que débloquent les crédits ?",
+    answer:
+      "Un crédit débloque une photo restaurée sans filigrane. Le pack Découverte couvre quelques photos ou un calendrier 3 photos ; le pack Album famille est pensé pour un album carré 24 pages.",
+  },
+  {
+    question: "Puis-je acheter plus de crédits ensuite ?",
+    answer:
+      "Oui. L’objectif est de permettre l’achat de crédits supplémentaires depuis Mes photos, Mon album et le tableau de bord dès que le paiement sera activé.",
   },
   {
     question: "Les albums imprimables sont-ils déjà disponibles ?",
     answer:
-      "Pas encore. L’app prépare déjà la galerie et les restaurations ; la génération d’albums imprimables arrivera dans une prochaine étape.",
+      "Oui. Vous pouvez préparer un album carré ou un calendrier familial, puis exporter un pack PNG ou un PDF à importer chez un imprimeur.",
   },
 ];
 
@@ -196,8 +206,8 @@ export default function Home() {
           </div>
 
           <div className="bg-white rounded-[2rem] p-6 xl:p-8 text-center shadow-sm border border-gray-100">
-            <p className="text-3xl xl:text-4xl font-black text-purple-600 mb-2">HD</p>
-            <p className="text-gray-600 font-medium">export prêt à imprimer</p>
+            <p className="text-3xl xl:text-4xl font-black text-purple-600 mb-2">PNG/PDF</p>
+            <p className="text-gray-600 font-medium">exports prêts à imprimer</p>
           </div>
 
           <div className="bg-white rounded-[2rem] p-6 xl:p-8 text-center shadow-sm border border-gray-100">
@@ -346,12 +356,13 @@ export default function Home() {
           </span>
 
           <h2 className="text-4xl sm:text-5xl font-black mb-6">
-            Des packs simples avant l’abonnement
+            Des packs simples pour vos projets souvenir
           </h2>
 
           <p className="text-xl text-gray-600">
-            Les paiements Stripe seront branchés ensuite. Ces offres servent de
-            base produit pour valider la présentation et les volumes.
+            1 crédit correspond à 1 photo restaurée. Le pack Découverte couvre
+            un calendrier portrait ou paysage, tandis que le pack Album famille
+            correspond au volume d’un album carré 24 pages.
           </p>
         </div>
 

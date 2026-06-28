@@ -2321,6 +2321,27 @@ export default function AlbumPage() {
                       </div>
                     </div>
 
+                    <div className="rounded-2xl bg-white p-4 shadow-sm">
+                      <p className="font-black">Crédits nécessaires</p>
+                      <div className="mt-3 grid gap-2 text-sm font-semibold text-gray-600">
+                        <p>
+                          {calendarProduct === "monthly"
+                            ? "1 crédit par photo mensuelle débloquée sans filigrane."
+                            : "Le pack Découverte couvre ce calendrier 3 photos."}
+                        </p>
+                        <p>
+                          Achetez des crédits supplémentaires si vous souhaitez
+                          créer plus de photos ou d’albums sans filigrane.
+                        </p>
+                      </div>
+                      <Link
+                        href="/#tarifs"
+                        className="mt-4 inline-flex rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+                      >
+                        Voir les packs
+                      </Link>
+                    </div>
+
                     <button
                       type="button"
                       onClick={printCurrentAlbum}
@@ -2450,6 +2471,26 @@ export default function AlbumPage() {
                         {emptyPagesCount === 0 ? "OK" : "À vérifier"} · {emptyPagesCount} page(s) vide(s)
                       </p>
                     </div>
+                  </div>
+
+                  <div className="rounded-2xl bg-white p-4 shadow-sm">
+                    <p className="font-black">Crédits nécessaires</p>
+                    <div className="mt-3 grid gap-2 text-sm font-semibold text-gray-600">
+                      <p>
+                        Le pack Album famille est pensé pour un album carré 24
+                        pages, avec environ 25 à 30 photos restaurées.
+                      </p>
+                      <p>
+                        Si votre album contient plus de photos, vous pourrez
+                        acheter des crédits supplémentaires.
+                      </p>
+                    </div>
+                    <Link
+                      href="/#tarifs"
+                      className="mt-4 inline-flex rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+                    >
+                      Voir les packs
+                    </Link>
                   </div>
 
                   <button

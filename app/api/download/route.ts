@@ -55,8 +55,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json(
       {
-        error: "HD download locked",
-        message: "Le téléchargement HD sans filigrane sera débloqué avec les packs payants.",
+        error: "download locked",
+        message: "Le téléchargement sans filigrane sera débloqué avec les crédits.",
       },
       { status: 402 }
     );

@@ -48,6 +48,15 @@ export async function POST(req: Request) {
       );
     }
 
+    const expectedStoragePrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/photos/${user.id}/original/`;
+
+    if (!imageUrl.startsWith(expectedStoragePrefix)) {
+      return NextResponse.json(
+        { success: false, error: "Image non autorisée" },
+        { status: 403 }
+      );
+    }
+
     const output = await replicate.run(
       "flux-kontext-apps/restore-image",
       {

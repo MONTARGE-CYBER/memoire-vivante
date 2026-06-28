@@ -162,11 +162,20 @@ export default function DashboardPage() {
 
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
             <p className="text-sm font-semibold text-gray-500 mb-3">
+              Packs
+            </p>
+            <p className="text-3xl font-black text-purple-600">
               Crédits
             </p>
-            <p className="text-5xl font-black text-purple-600">
-              —
+            <p className="mt-3 text-sm font-semibold text-gray-500">
+              Achetez des crédits pour débloquer plus de photos sans filigrane.
             </p>
+            <Link
+              href="/#tarifs"
+              className="mt-5 inline-flex rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
+            >
+              Voir les packs
+            </Link>
           </div>
 
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">

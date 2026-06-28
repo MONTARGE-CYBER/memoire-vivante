@@ -16,7 +16,7 @@ export default function ConditionsUtilisationPage() {
         },
         {
           title: "Évolutions du service",
-          text: "Certaines fonctionnalités, comme les albums imprimables ou les téléchargements sans filigrane via packs payants, peuvent évoluer au fil du développement.",
+          text: "Certaines fonctionnalités, comme les exports imprimables ou les téléchargements sans filigrane via crédits, peuvent évoluer au fil du développement.",
         },
       ]}
     />

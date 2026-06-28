@@ -104,6 +104,29 @@ export default function GalleryPage() {
           </p>
         </div>
 
+        <div className="mb-10 grid gap-4 rounded-[2rem] border border-purple-100 bg-white/85 p-6 shadow-sm backdrop-blur-xl md:grid-cols-[1fr_auto] md:items-center">
+          <div>
+            <p className="mb-2 text-sm font-black uppercase tracking-[0.18em] text-purple-600">
+              Crédits photo
+            </p>
+            <h2 className="text-2xl font-black">
+              Débloquez vos photos sans filigrane
+            </h2>
+            <p className="mt-2 text-gray-600">
+              1 crédit = 1 photo restaurée sans filigrane. Vous pourrez acheter
+              des crédits supplémentaires si vous souhaitez préparer plus de
+              photos pour un album ou un calendrier.
+            </p>
+          </div>
+
+          <Link
+            href="/#tarifs"
+            className="rounded-2xl bg-purple-600 px-6 py-4 text-center font-bold text-white transition hover:-translate-y-0.5"
+          >
+            Voir les packs
+          </Link>
+        </div>
+
         {loading ? (
           <p className="text-gray-600">Chargement...</p>
         ) : items.length === 0 ? (
@@ -169,11 +192,18 @@ export default function GalleryPage() {
                 </div>
 
                 <div className="mt-6 grid gap-3">
+                  <Link
+                    href="/album"
+                    className="text-center px-5 py-4 rounded-xl bg-purple-600 text-white font-semibold"
+                  >
+                    Utiliser dans un album
+                  </Link>
+
                   <button
                     disabled
                     className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold opacity-50"
                   >
-                    HD sans filigrane bientôt
+                    Sans filigrane avec crédits
                   </button>
 
                   <Link

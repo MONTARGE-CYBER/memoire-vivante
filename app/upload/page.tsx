@@ -14,6 +14,9 @@ const guidance = [
   "La restauration peut prendre quelques instants.",
 ];
 
+const acceptedImageTypes = ["image/jpeg", "image/png", "image/tiff", "image/webp"];
+const maxUploadSize = 10 * 1024 * 1024;
+
 const howItWorks = [
   {
     title: "Importez une photo ancienne",
@@ -25,7 +28,7 @@ const howItWorks = [
   },
   {
     title: "Préparez votre album souvenir",
-    text: "Consultez l’aperçu gratuit filigrané, puis débloquez plus tard la version HD sans filigrane, prête à imprimer ou à offrir.",
+    text: "Consultez l’aperçu gratuit filigrané, puis utilisez vos crédits pour débloquer la version sans filigrane, prête à imprimer ou à offrir.",
   },
 ];
 
@@ -59,6 +62,18 @@ export default function UploadPage() {
     const selectedFile = e.target.files?.[0];
 
     if (!selectedFile) return;
+
+    if (!acceptedImageTypes.includes(selectedFile.type)) {
+      alert("Format non pris en charge. Utilisez une image JPG, PNG, TIFF ou WebP.");
+      e.target.value = "";
+      return;
+    }
+
+    if (selectedFile.size > maxUploadSize) {
+      alert("La photo est trop lourde. Utilisez une image de 10 Mo maximum.");
+      e.target.value = "";
+      return;
+    }
 
     setFile(selectedFile);
     setRestoredImage(null);
@@ -95,7 +110,11 @@ export default function UploadPage() {
         return;
       }
 
-      const fileName = `${session.user.id}/original/${Date.now()}-${file.name}`;
+      const safeName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]+/g, "-");
+      const fileName = `${session.user.id}/original/${Date.now()}-${safeName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("photos")
@@ -159,8 +178,8 @@ export default function UploadPage() {
 
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Testez gratuitement avec un exemple ou importez une photo de
-              famille. Le rendu gratuit est filigrané ; la version HD sans
-              filigrane sera débloquée avec les packs.
+              famille. Le rendu gratuit est filigrané ; la version sans
+              filigrane sera débloquée avec les crédits.
             </p>
 
             <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
@@ -269,7 +288,7 @@ export default function UploadPage() {
               </p>
 
               <p className="text-gray-500 mt-3">
-                JPG, PNG ou TIFF - aperçu gratuit avec filigrane
+                JPG, PNG, TIFF ou WebP - 10 Mo maximum - aperçu gratuit avec filigrane
               </p>
             </label>
 
@@ -419,14 +438,14 @@ export default function UploadPage() {
                         disabled={!restorationId || isWatermarkedPreview}
                         className="text-center px-5 py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold disabled:opacity-60"
                       >
-                        HD bientôt
+                        Sans filigrane avec crédits
                       </button>
                     </div>
 
                       {isWatermarkedPreview && (
                         <p className="mt-4 text-center text-sm font-semibold text-gray-500">
-                          La version gratuite reste filigranée. Les packs Stripe
-                          permettront de débloquer le téléchargement HD sans filigrane.
+                          La version gratuite reste filigranée. Les packs de crédits
+                          permettront de débloquer le téléchargement sans filigrane.
                         </p>
                       )}
                     </>

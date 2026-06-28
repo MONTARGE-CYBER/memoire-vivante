@@ -43,6 +43,19 @@ export default function SiteNav({ showMarketingLinks = false }: SiteNavProps) {
 
         <div className="lg:hidden border-t border-white/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex gap-3 overflow-x-auto text-sm font-black text-gray-600">
+            {showMarketingLinks && (
+              <>
+                <a href="#fonctionnalites" className="shrink-0 rounded-full bg-white px-4 py-2">
+                  Fonctionnalités
+                </a>
+                <a href="#tarifs" className="shrink-0 rounded-full bg-white px-4 py-2">
+                  Tarifs
+                </a>
+                <a href="#faq" className="shrink-0 rounded-full bg-white px-4 py-2">
+                  FAQ
+                </a>
+              </>
+            )}
             <Link href="/upload" className="shrink-0 rounded-full bg-black px-4 py-2 text-white">
               Restaurer
             </Link>

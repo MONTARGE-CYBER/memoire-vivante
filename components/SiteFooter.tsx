@@ -44,13 +44,15 @@ export default function SiteFooter() {
             <input
               type="email"
               placeholder="Saisissez votre adresse e-mail"
+              disabled
               className="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
             />
             <button
               type="button"
-              className="w-full rounded-2xl bg-black px-5 py-4 font-bold text-white"
+              disabled
+              className="w-full rounded-2xl bg-black px-5 py-4 font-bold text-white opacity-60"
             >
-              S&apos;abonner à la newsletter
+              Newsletter bientôt disponible
             </button>
           </form>
         </div>
