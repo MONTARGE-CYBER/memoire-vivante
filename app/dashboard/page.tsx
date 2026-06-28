@@ -126,7 +126,7 @@ export default function DashboardPage() {
               Mes photos
             </h2>
             <p className="text-gray-600 text-lg">
-              Retrouvez vos photos restaurées, téléchargez-les ou supprimez-les.
+              Retrouvez vos photos restaurées, utilisez-les dans vos albums ou supprimez-les.
             </p>
           </Link>
         </div>

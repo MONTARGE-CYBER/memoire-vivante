@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
@@ -39,6 +39,7 @@ type AlbumSaveConfig = {
   calendarMonths: CalendarMonthConfig[];
   calendarPosterCaption: string;
   calendarPosterDates: string;
+  calendarPosterPhotoFits: Record<number, CalendarPhotoFit>;
   calendarPosterPhotoIds: number[];
   calendarProduct: string;
   calendarTheme: string;
@@ -46,6 +47,7 @@ type AlbumSaveConfig = {
   closingText: string;
   coverPhotoFit: CalendarPhotoFit;
   coverPhotoId: number | null;
+  coverBackground: string;
   coverText: string;
   dedication: string;
   format: string;
@@ -77,9 +79,8 @@ const albumTypes = [
 ];
 
 const albumFormats = [
-  { id: "square", label: "Carré", detail: "20 x 20 cm", previewClass: "aspect-square" },
-  { id: "portrait", label: "Portrait", detail: "A4 vertical", previewClass: "aspect-[4/5]" },
-  { id: "landscape", label: "Paysage", detail: "A4 horizontal", previewClass: "aspect-[4/3]" },
+  { id: "square", label: "Carré 21 x 21", detail: "Format classique CEWE / Photobox", previewClass: "aspect-square" },
+  { id: "square-xl", label: "Carré XL 30 x 30", detail: "Grand format carré premium", previewClass: "aspect-square" },
 ];
 
 const albumThemes = [
@@ -192,6 +193,32 @@ const placeholderFrames = [
 const vintageCoverClass =
   "bg-[#efe2cf] [background-image:linear-gradient(135deg,rgba(255,255,255,0.42)_0%,rgba(255,255,255,0)_42%),linear-gradient(0deg,rgba(120,82,42,0.08)_1px,transparent_1px)] [background-size:100%_100%,18px_18px]";
 
+const coverBackgroundOptions = [
+  {
+    id: "vintage",
+    label: "Vintage",
+    detail: "Papier souvenir",
+    previewClass: "bg-[#efe2cf]",
+    coverClass: vintageCoverClass,
+  },
+  {
+    id: "ivoire",
+    label: "Ivoire",
+    detail: "Sobre et lumineux",
+    previewClass: "bg-[#fffaf2]",
+    coverClass:
+      "bg-[#fffaf2] [background-image:linear-gradient(135deg,rgba(255,255,255,0.68)_0%,rgba(255,255,255,0)_46%)]",
+  },
+  {
+    id: "prune",
+    label: "Prune doux",
+    detail: "Plus premium",
+    previewClass: "bg-[#f6efff]",
+    coverClass:
+      "bg-[#f6efff] [background-image:linear-gradient(135deg,rgba(255,255,255,0.62)_0%,rgba(255,255,255,0)_42%),linear-gradient(0deg,rgba(99,37,142,0.06)_1px,transparent_1px)] [background-size:100%_100%,20px_20px]",
+  },
+];
+
 function getDefaultCalendarYear() {
   return new Date().getFullYear() + 1;
 }
@@ -273,21 +300,51 @@ function getPhotoStyleClass(pageStyle: string) {
   return "border border-stone-100 shadow-sm";
 }
 
+function getPageExportSlotStyle(photosPerPage: number, index: number): CSSProperties {
+  const gap = 20;
+  const half = `calc((100% - ${gap}px) / 2)`;
+
+  if (photosPerPage === 1) {
+    return { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 };
+  }
+
+  if (photosPerPage === 2) {
+    return index === 0
+      ? { height: half, left: 0, position: "absolute", right: 0, top: 0 }
+      : { bottom: 0, height: half, left: 0, position: "absolute", right: 0 };
+  }
+
+  if (photosPerPage === 3) {
+    if (index === 0) {
+      return { height: half, left: 0, position: "absolute", right: 0, top: 0 };
+    }
+
+    return index === 1
+      ? { bottom: 0, height: half, left: 0, position: "absolute", width: half }
+      : { bottom: 0, height: half, position: "absolute", right: 0, width: half };
+  }
+
+  if (index === 0) return { height: half, left: 0, position: "absolute", top: 0, width: half };
+  if (index === 1) return { height: half, position: "absolute", right: 0, top: 0, width: half };
+  if (index === 2) return { bottom: 0, height: half, left: 0, position: "absolute", width: half };
+  return { bottom: 0, height: half, position: "absolute", right: 0, width: half };
+}
+
 function getInteriorPageClass(pageStyle: string) {
   if (pageStyle === "immersive") return "relative min-h-[430px] rounded-2xl bg-[#fffdf8] p-2 shadow-inner";
   if (pageStyle === "print") return "relative min-h-[430px] rounded-2xl bg-[#fffaf1] p-4 shadow-inner";
   return "relative min-h-[430px] rounded-2xl bg-[#fffdf8] p-3 shadow-inner";
 }
 
-function getAlbumPdfPreviewClass(format: string) {
-  if (format === "landscape") return "mx-auto w-[900px] max-w-none shrink-0";
-  if (format === "portrait") return "mx-auto w-[520px] max-w-none shrink-0";
+function getAlbumPdfPreviewClass() {
   return "mx-auto w-[640px] max-w-none shrink-0";
 }
 
-function getAlbumPdfPageClass(format: string) {
-  if (format === "landscape") return "pdf-page-album-landscape";
-  if (format === "portrait") return "pdf-page-album-portrait";
+function getAlbumImageExportPreviewClass() {
+  return "mx-auto h-[800px] w-[800px] max-w-none shrink-0";
+}
+
+function getAlbumPdfPageClass() {
   return "pdf-page-album-square";
 }
 
@@ -307,6 +364,7 @@ export default function AlbumPage() {
   const [savedAlbumId, setSavedAlbumId] = useState<string | null>(null);
   const [savingAlbum, setSavingAlbum] = useState(false);
   const [exportingImages, setExportingImages] = useState(false);
+  const [renderingImageExport, setRenderingImageExport] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [items, setItems] = useState<Restoration[]>([]);
@@ -316,6 +374,7 @@ export default function AlbumPage() {
   const [albumType, setAlbumType] = useState("souvenir");
   const [coverPhotoId, setCoverPhotoId] = useState<number | null>(null);
   const [coverPhotoFit, setCoverPhotoFit] = useState<CalendarPhotoFit>("cover");
+  const [coverBackground, setCoverBackground] = useState("vintage");
   const [format, setFormat] = useState("square");
   const [theme, setTheme] = useState("heritage");
   const [calendarProduct, setCalendarProduct] = useState("monthly");
@@ -325,6 +384,9 @@ export default function AlbumPage() {
     createInitialCalendarMonths([])
   );
   const [calendarPosterPhotoIds, setCalendarPosterPhotoIds] = useState<number[]>([]);
+  const [calendarPosterPhotoFits, setCalendarPosterPhotoFits] = useState<
+    Record<number, CalendarPhotoFit>
+  >({});
   const [calendarPosterCaption, setCalendarPosterCaption] = useState(
     "Une année de souvenirs restaurés à partager en famille."
   );
@@ -360,6 +422,9 @@ export default function AlbumPage() {
   const selectedCalendarProduct =
     calendarProductOptions.find((product) => product.id === calendarProduct) ??
     calendarProductOptions[0];
+  const selectedCoverBackground =
+    coverBackgroundOptions.find((option) => option.id === coverBackground) ??
+    coverBackgroundOptions[0];
   const coverPhoto = coverPhotoId ? getPhotoById(items, coverPhotoId) : null;
   const calendarPosterPhotos = calendarPosterPhotoIds
     .map((photoId) => getPhotoById(items, photoId))
@@ -413,11 +478,13 @@ export default function AlbumPage() {
       calendarMonths,
       calendarPosterCaption,
       calendarPosterDates,
+      calendarPosterPhotoFits,
       calendarPosterPhotoIds,
       calendarProduct,
       calendarTheme,
       calendarYear,
       closingText,
+      coverBackground,
       coverPhotoFit,
       coverPhotoId,
       coverText,
@@ -439,7 +506,12 @@ export default function AlbumPage() {
       setCoverPhotoId(config.coverPhotoId);
     }
     if (config.coverPhotoFit) setCoverPhotoFit(config.coverPhotoFit);
-    if (typeof config.format === "string") setFormat(config.format);
+    if (typeof config.coverBackground === "string") {
+      setCoverBackground(config.coverBackground);
+    }
+    if (typeof config.format === "string") {
+      setFormat(albumFormats.some((albumFormat) => albumFormat.id === config.format) ? config.format : "square");
+    }
     if (typeof config.theme === "string") setTheme(config.theme);
     if (typeof config.calendarProduct === "string") setCalendarProduct(config.calendarProduct);
     if (typeof config.calendarTheme === "string") setCalendarTheme(config.calendarTheme);
@@ -447,6 +519,9 @@ export default function AlbumPage() {
     if (Array.isArray(config.calendarMonths)) setCalendarMonths(config.calendarMonths);
     if (Array.isArray(config.calendarPosterPhotoIds)) {
       setCalendarPosterPhotoIds(config.calendarPosterPhotoIds);
+    }
+    if (config.calendarPosterPhotoFits) {
+      setCalendarPosterPhotoFits(config.calendarPosterPhotoFits);
     }
     if (typeof config.calendarPosterCaption === "string") {
       setCalendarPosterCaption(config.calendarPosterCaption);
@@ -521,12 +596,11 @@ export default function AlbumPage() {
     const existingPrintStyle = document.getElementById(printStyleId);
     const printStyle = existingPrintStyle ?? document.createElement("style");
     const pageOrientation =
-      (albumType === "calendar" && calendarProduct === "posterLandscape") ||
-      (albumType !== "calendar" && format === "landscape")
+      albumType === "calendar" && calendarProduct === "posterLandscape"
         ? "landscape"
         : "portrait";
     const pageSize =
-      albumType !== "calendar" && format === "square"
+      albumType !== "calendar"
         ? "200mm 200mm"
         : `A4 ${pageOrientation}`;
 
@@ -541,19 +615,24 @@ export default function AlbumPage() {
   }
 
   async function exportImagePack() {
-    if (!imageExportRef.current || exportingImages) return;
-
-    const exportNodes = Array.from(
-      imageExportRef.current.querySelectorAll<HTMLElement>("[data-export-name]")
-    );
-
-    if (exportNodes.length === 0) return;
+    if (exportingImages) return;
 
     setExportingImages(true);
+    setRenderingImageExport(true);
     setSaveError("");
     setSaveMessage("");
 
     try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      if (!imageExportRef.current) return;
+
+      const exportNodes = Array.from(
+        imageExportRef.current.querySelectorAll<HTMLElement>("[data-export-name]")
+      );
+
+      if (exportNodes.length === 0) return;
+
       const zip = new JSZip();
 
       for (const node of exportNodes) {
@@ -590,6 +669,7 @@ export default function AlbumPage() {
       );
     } finally {
       setExportingImages(false);
+      setRenderingImageExport(false);
     }
   }
 
@@ -709,17 +789,30 @@ export default function AlbumPage() {
     );
   }
 
-  function addPage() {
-    setPages((current) => [
-      ...current,
-      {
-        id: `page-${Date.now()}`,
+  function addPageAfter(pageIndex: number) {
+    setPages((current) => {
+      let nextPageNumber = current.length + 1;
+      let nextPageId = `page-${nextPageNumber}`;
+
+      while (current.some((page) => page.id === nextPageId)) {
+        nextPageNumber += 1;
+        nextPageId = `page-${nextPageNumber}`;
+      }
+
+      const newPage = {
+        id: nextPageId,
         note: "",
         photoIds: [],
         photoFits: {},
         photosPerPage: 4,
-      },
-    ]);
+      };
+
+      return [
+        ...current.slice(0, pageIndex + 1),
+        newPage,
+        ...current.slice(pageIndex + 1),
+      ];
+    });
   }
 
   function removePage(pageIndex: number) {
@@ -741,22 +834,91 @@ export default function AlbumPage() {
 
   function toggleCalendarPosterPhoto(photoId: number) {
     setCalendarPosterPhotoIds((current) => {
+      let nextPhotoIds: number[];
+
       if (current.includes(photoId)) {
-        return current.filter((id) => id !== photoId);
+        nextPhotoIds = current.filter((id) => id !== photoId);
+      } else if (current.length >= 3) {
+        nextPhotoIds = [...current.slice(1), photoId];
+      } else {
+        nextPhotoIds = [...current, photoId];
       }
 
-      if (current.length >= 3) {
-        return [...current.slice(1), photoId];
-      }
+      setCalendarPosterPhotoFits((currentFits) =>
+        Object.fromEntries(
+          nextPhotoIds.map((id) => [id, currentFits[id] ?? "cover"])
+        )
+      );
 
-      return [...current, photoId];
+      return nextPhotoIds;
     });
   }
 
-  function renderPagePreview(page: AlbumPageConfig, pageIndex: number, className = "") {
+  function updateCalendarPosterPhotoFit(
+    photoId: number,
+    photoFit: CalendarPhotoFit
+  ) {
+    setCalendarPosterPhotoFits((current) => ({
+      ...current,
+      [photoId]: photoFit,
+    }));
+  }
+
+  function renderPagePreview(
+    page: AlbumPageConfig,
+    pageIndex: number,
+    className = "",
+    cleanExport = false
+  ) {
     const pagePhotos = page.photoIds
       .map((photoId) => getPhotoById(items, photoId))
       .filter(Boolean) as Restoration[];
+
+    if (cleanExport) {
+      const slots = Array.from({ length: page.photosPerPage });
+      const hasNote = Boolean(page.note);
+
+      return (
+        <div className={`${getInteriorPageClass(pageStyle)} ${className}`}>
+          <div
+            className="absolute inset-4"
+            style={{ bottom: hasNote ? 104 : 16 }}
+          >
+            {slots.map((_, slotIndex) => {
+              const photo = pagePhotos[slotIndex] ?? null;
+
+              return (
+                <div
+                  key={`${page.id}-export-slot-${slotIndex}`}
+                  style={getPageExportSlotStyle(page.photosPerPage, slotIndex)}
+                >
+                  {photo ? (
+                    <WatermarkedImage
+                      src={photo.restored_url}
+                      alt={`Page ${pageIndex + 1} photo ${slotIndex + 1}`}
+                      className="h-full w-full bg-white shadow-sm"
+                      imageClassName={getCalendarPhotoFitClass(
+                        page.photoFits[photo.id] ?? "cover"
+                      )}
+                    />
+                  ) : (
+                    <span
+                      className={`block h-full w-full rounded-2xl border-2 border-dashed ${selectedTheme.borderClass}`}
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {hasNote && (
+            <p className="absolute bottom-4 left-4 right-4 rounded-xl bg-[#f7f3ed] px-5 py-4 text-lg font-semibold leading-relaxed text-gray-500">
+              {page.note}
+            </p>
+          )}
+        </div>
+      );
+    }
 
     return (
       <div className={`${getInteriorPageClass(pageStyle)} ${className}`}>
@@ -893,24 +1055,53 @@ export default function AlbumPage() {
     );
   }
 
-  function renderCalendarPosterPreview() {
+  function renderCalendarPosterPreview(displayMode: "screen" | "export" = "export") {
     const isPortrait = calendarProduct === "posterPortrait";
+    const isScreenPreview = displayMode === "screen";
     const posterPhotos = calendarPosterPhotos.slice(0, 3);
     const posterSlots = [posterPhotos[0], posterPhotos[1], posterPhotos[2]];
     const posterSizeClass = isPortrait
-      ? "min-h-[930px] max-w-[620px]"
-      : "h-[620px] w-[900px] max-w-none";
-    const photoAreaClass = isPortrait ? "h-[360px]" : "h-[230px]";
+      ? isScreenPreview
+        ? "min-h-[900px] w-[520px] max-w-full"
+        : "min-h-[930px] max-w-[620px]"
+      : isScreenPreview
+        ? "min-h-[560px] w-[760px] max-w-none"
+        : "h-[620px] w-[900px] max-w-none";
+    const photoAreaClass = isPortrait
+      ? isScreenPreview
+        ? "h-[250px]"
+        : "h-[360px]"
+      : isScreenPreview
+        ? "h-[145px]"
+        : "h-[230px]";
     const monthGridClass = isPortrait ? "grid-cols-3" : "grid-cols-6";
-    const posterPaddingClass = isPortrait ? "p-5" : "p-4";
-    const posterGapClass = isPortrait ? "gap-4" : "gap-3";
+    const posterPaddingClass = isPortrait
+      ? isScreenPreview
+        ? "p-4"
+        : "p-5"
+      : isScreenPreview
+        ? "p-3"
+        : "p-4";
+    const posterGapClass = isPortrait
+      ? isScreenPreview
+        ? "gap-3"
+        : "gap-4"
+      : isScreenPreview
+        ? "gap-2"
+        : "gap-3";
     const posterImageProps = {
       badgeClassName: isPortrait
-        ? "bottom-3 right-3 px-3 py-1.5 text-[10px]"
+        ? isScreenPreview
+          ? "bottom-2 right-2 px-2.5 py-1 text-[9px]"
+          : "bottom-3 right-3 px-3 py-1.5 text-[10px]"
         : "bottom-2 right-2 px-2 py-1 text-[9px]",
       watermarkClassName: isPortrait
-        ? "px-5 py-2 text-lg tracking-[0.18em]"
-        : "px-4 py-2 text-sm tracking-[0.16em]",
+        ? isScreenPreview
+          ? "px-4 py-1.5 text-sm tracking-[0.16em]"
+          : "px-5 py-2 text-lg tracking-[0.18em]"
+        : isScreenPreview
+          ? "px-3 py-1.5 text-xs tracking-[0.14em]"
+          : "px-4 py-2 text-sm tracking-[0.16em]",
     };
 
     return (
@@ -931,7 +1122,9 @@ export default function AlbumPage() {
                   src={posterSlots[0].restored_url}
                   alt="Photo principale affiche calendrier"
                   className="h-full min-h-0"
-                  imageClassName="h-full w-full object-cover"
+                  imageClassName={getCalendarPhotoFitClass(
+                    calendarPosterPhotoFits[posterSlots[0].id] ?? "cover"
+                  )}
                   {...posterImageProps}
                 />
               ) : (
@@ -948,7 +1141,9 @@ export default function AlbumPage() {
                       src={photo.restored_url}
                       alt={`Photo affiche calendrier ${index + 2}`}
                       className="h-full min-h-0"
-                      imageClassName="h-full w-full object-cover"
+                      imageClassName={getCalendarPhotoFitClass(
+                        calendarPosterPhotoFits[photo.id] ?? "cover"
+                      )}
                       {...posterImageProps}
                     />
                   ) : (
@@ -971,7 +1166,9 @@ export default function AlbumPage() {
                     src={photo.restored_url}
                     alt={`Photo affiche calendrier ${index + 1}`}
                     className="h-full min-h-0"
-                    imageClassName="h-full w-full object-cover"
+                    imageClassName={getCalendarPhotoFitClass(
+                      calendarPosterPhotoFits[photo.id] ?? "cover"
+                    )}
                     {...posterImageProps}
                   />
                 ) : (
@@ -987,29 +1184,43 @@ export default function AlbumPage() {
           )}
 
           <div className="text-center">
-            <h3 className={`${isPortrait ? "text-5xl" : "text-4xl"} font-black text-gray-950`}>
+            <h3 className={`${
+              isPortrait
+                ? isScreenPreview
+                  ? "text-4xl"
+                  : "text-5xl"
+                : isScreenPreview
+                  ? "text-3xl"
+                  : "text-4xl"
+            } font-black text-gray-950`}>
               {calendarYear}
             </h3>
-            <p className={`${isPortrait ? "mt-1 text-sm" : "mt-0.5 text-xs"} font-semibold leading-relaxed text-gray-600`}>
+            <p className={`${
+              isPortrait
+                ? isScreenPreview
+                  ? "mt-0.5 text-xs"
+                  : "mt-1 text-sm"
+                : "mt-0.5 text-xs"
+            } font-semibold leading-relaxed text-gray-600`}>
               {calendarPosterCaption || "Une légende familiale à compléter."}
             </p>
           </div>
 
-          <div className={`rounded-2xl bg-white/70 ${isPortrait ? "p-3" : "p-2"}`}>
-            <div className={`grid gap-2 ${monthGridClass}`}>
+          <div className={`rounded-2xl bg-white/70 ${isPortrait ? (isScreenPreview ? "p-2" : "p-3") : "p-2"}`}>
+            <div className={`grid ${isScreenPreview ? "gap-1.5" : "gap-2"} ${monthGridClass}`}>
               {monthNames.map((monthName, monthIndex) => (
                 <div key={`poster-full-month-${monthName}`}>
-                  {renderPosterMiniMonth(monthIndex, !isPortrait)}
+                  {renderPosterMiniMonth(monthIndex, !isPortrait || isScreenPreview)}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className={`mt-auto rounded-2xl bg-white/75 ${isPortrait ? "p-4" : "p-3"}`}>
-            <h4 className={`${isPortrait ? "text-xl" : "text-base"} font-black text-gray-950`}>
+          <div className={`mt-auto rounded-2xl bg-white/75 ${isPortrait ? (isScreenPreview ? "p-3" : "p-4") : "p-3"}`}>
+            <h4 className={`${isPortrait ? (isScreenPreview ? "text-base" : "text-xl") : "text-base"} font-black text-gray-950`}>
               {title || "Notre calendrier souvenir"}
             </h4>
-            <p className={`${isPortrait ? "mt-3" : "mt-1"} text-xs font-semibold leading-relaxed text-gray-500`}>
+            <p className={`${isPortrait && !isScreenPreview ? "mt-3" : "mt-1"} text-xs font-semibold leading-relaxed text-gray-500`}>
               {calendarPosterDates || "Dates importantes à ajouter."}
             </p>
           </div>
@@ -1018,15 +1229,19 @@ export default function AlbumPage() {
     );
   }
 
-  function renderCoverPreview(className = "") {
+  function renderCoverPreview(className = "", cleanExport = false) {
     return (
       <div className={`relative ${className}`}>
-        <div className="absolute -bottom-4 left-8 right-8 h-10 rounded-full bg-black/20 blur-2xl" />
-        <div className="absolute inset-y-5 -left-2 w-4 rounded-l-2xl bg-[#3b2b1d]/20" />
-        <div className={`${selectedFormat.previewClass} relative min-h-[560px] overflow-hidden rounded-[1.25rem] border border-[#d2bfa8] ${vintageCoverClass} p-5 sm:min-h-[620px] sm:p-7 shadow-[0_28px_70px_rgba(75,52,28,0.35)]`}>
+        {!cleanExport && (
+          <>
+            <div className="absolute -bottom-4 left-8 right-8 h-10 rounded-full bg-black/20 blur-2xl" />
+            <div className="absolute inset-y-5 -left-2 w-4 rounded-l-2xl bg-[#3b2b1d]/20" />
+          </>
+        )}
+        <div className={`${selectedFormat.previewClass} relative min-h-[560px] overflow-hidden rounded-[1.25rem] border border-[#d2bfa8] ${selectedCoverBackground.coverClass} p-5 sm:min-h-[620px] sm:p-7 shadow-[0_28px_70px_rgba(75,52,28,0.35)]`}>
           <div className="absolute inset-y-0 left-0 w-4 bg-black/10" />
           <div className="absolute inset-x-8 top-4 h-px bg-white/45" />
-          {showPrintGuides && (
+          {showPrintGuides && !cleanExport && (
             <div className="pointer-events-none absolute inset-6 z-20 rounded-[1rem] border border-dashed border-amber-700/35">
               <span className="absolute -top-3 left-4 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber-800">
                 Zone sûre
@@ -1034,9 +1249,11 @@ export default function AlbumPage() {
             </div>
           )}
           <div className="relative z-10 flex min-h-[520px] flex-col items-center justify-center text-center sm:min-h-[570px]">
-            <p className={`text-xs font-black uppercase tracking-[0.22em] ${selectedTheme.textClass}`}>
-              Couverture
-            </p>
+            {!cleanExport && (
+              <p className={`text-xs font-black uppercase tracking-[0.22em] ${selectedTheme.textClass}`}>
+                Couverture
+              </p>
+            )}
             <h2 className="mt-4 max-w-md text-2xl sm:text-3xl font-black leading-tight text-[#2f241a]">
               {title || "Votre album souvenir"}
             </h2>
@@ -1092,8 +1309,7 @@ export default function AlbumPage() {
 
         <div
           className={`grid gap-8 lg:gap-12 items-start ${
-            (albumType === "calendar" && calendarProduct === "monthly") ||
-            albumType === "souvenir"
+            albumType === "calendar" || albumType === "souvenir"
               ? "lg:grid-cols-1"
               : "lg:grid-cols-[0.95fr_1.05fr]"
           }`}
@@ -1202,7 +1418,7 @@ export default function AlbumPage() {
                   </div>
                 </div>
               ) : albumType === "souvenir" ? (
-                <div className="mt-6 grid sm:grid-cols-3 gap-3">
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
                   {albumFormats.map((albumFormat) => (
                     <button
                       key={albumFormat.id}
@@ -1434,11 +1650,11 @@ export default function AlbumPage() {
                                             : "border-gray-100 bg-white shadow-sm"
                                         }`}
                                       >
-                                        <div className="relative h-24 overflow-hidden bg-black/5">
+                                        <div className="relative h-28 overflow-hidden bg-gray-50">
                                           <img
                                             src={item.restored_url}
                                             alt={`Photo ${item.id}`}
-                                            className="h-full w-full object-cover"
+                                            className="h-full w-full object-contain"
                                           />
                                           <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
                                             Mémoire Vivante
@@ -1533,11 +1749,11 @@ export default function AlbumPage() {
                                         : "border-gray-100 bg-white shadow-sm"
                                     }`}
                                   >
-                                    <div className="relative h-24 overflow-hidden bg-black/5">
+                                    <div className="relative h-32 overflow-hidden bg-gray-50">
                                       <img
                                         src={item.restored_url}
                                         alt={`Photo affiche ${item.id}`}
-                                        className="h-full w-full object-cover"
+                                        className="h-full w-full object-contain"
                                       />
                                       <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
                                         Mémoire Vivante
@@ -1554,6 +1770,58 @@ export default function AlbumPage() {
                             </div>
                           )}
                         </div>
+
+                        {calendarPosterPhotos.length > 0 && (
+                          <div className="rounded-2xl bg-purple-50 p-4">
+                            <p className="mb-3 text-sm font-black text-purple-700">
+                              Cadrage des photos sélectionnées
+                            </p>
+                            <div className="grid gap-3">
+                              {calendarPosterPhotos.slice(0, 3).map((photo, photoIndex) => (
+                                <div
+                                  key={`poster-fit-${photo.id}`}
+                                  className="grid gap-3 rounded-2xl bg-white p-3 sm:grid-cols-[96px_1fr] sm:items-center"
+                                >
+                                  <img
+                                    src={photo.restored_url}
+                                    alt={`Photo affiche sélectionnée ${photoIndex + 1}`}
+                                    className={`h-20 w-full rounded-xl bg-black/5 sm:w-24 ${getPhotoFitObjectClass(
+                                      calendarPosterPhotoFits[photo.id] ?? "cover"
+                                    )}`}
+                                  />
+                                  <div>
+                                    <p className="mb-2 text-xs font-black text-gray-500">
+                                      Photo {photoIndex + 1}
+                                    </p>
+                                    <div className="grid grid-cols-3 gap-2">
+                                      {calendarPhotoFitOptions.map((fitOption) => (
+                                        <button
+                                          key={`poster-fit-${photo.id}-${fitOption.id}`}
+                                          type="button"
+                                          onClick={() =>
+                                            updateCalendarPosterPhotoFit(
+                                              photo.id,
+                                              fitOption.id
+                                            )
+                                          }
+                                          className={`rounded-xl px-3 py-2 text-left text-xs font-black ${
+                                            (calendarPosterPhotoFits[photo.id] ?? "cover") ===
+                                            fitOption.id
+                                              ? "bg-purple-600 text-white shadow-sm"
+                                              : "bg-purple-50 text-purple-700"
+                                          }`}
+                                          title={fitOption.detail}
+                                        >
+                                          {fitOption.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -1598,6 +1866,28 @@ export default function AlbumPage() {
                         className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
                       />
                     </label>
+                  </div>
+
+                  <div className="mt-6">
+                    <p className="mb-3 text-sm font-bold text-gray-600">Fond de couverture</p>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      {coverBackgroundOptions.map((option) => (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => setCoverBackground(option.id)}
+                          className={`rounded-2xl border p-3 text-left transition ${
+                            coverBackground === option.id
+                              ? "border-purple-500 bg-purple-50 text-purple-700"
+                              : "border-gray-100 bg-white text-gray-600"
+                          }`}
+                        >
+                          <span className={`mb-3 block h-16 rounded-xl border border-black/5 ${option.previewClass}`} />
+                          <span className="block font-black">{option.label}</span>
+                          <span className="block text-sm font-semibold">{option.detail}</span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   {coverPhoto && (
@@ -1698,40 +1988,13 @@ export default function AlbumPage() {
 
             <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
               <p className="text-sm font-black text-purple-700 mb-2">Étape 3</p>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+              <div className="mb-5">
                 <div>
                   <h2 className="text-2xl font-black">Composer les pages intérieures</h2>
                   <p className="text-gray-600">
                     La page 1 apparaît à droite. À gauche, c’est le verso de la couverture.
                   </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={addPage}
-                  className="rounded-2xl bg-black px-5 py-3 font-bold text-white"
-                >
-                  Ajouter une page
-                </button>
-              </div>
-
-              <div className="grid sm:grid-cols-3 gap-3 mb-6">
-                {albumThemes.map((albumTheme) => (
-                  <button
-                    key={albumTheme.id}
-                    type="button"
-                    onClick={() => setTheme(albumTheme.id)}
-                    className={`rounded-2xl border px-4 py-4 text-left ${
-                      theme === albumTheme.id
-                        ? "border-purple-500 bg-purple-50"
-                        : "border-gray-100 bg-white"
-                    }`}
-                  >
-                    <span
-                      className={`mb-3 block h-8 w-8 rounded-full border ${albumTheme.previewClass} ${albumTheme.borderClass}`}
-                    />
-                    <span className="font-black text-gray-700">{albumTheme.label}</span>
-                  </button>
-                ))}
               </div>
 
               <div className="grid sm:grid-cols-3 gap-3 mb-6">
@@ -1779,14 +2042,23 @@ export default function AlbumPage() {
                             : "Page intérieure"}
                         </h3>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => removePage(pageIndex)}
-                        disabled={pages.length === 1}
-                        className="rounded-2xl bg-red-50 px-4 py-2 text-sm font-black text-red-600 disabled:opacity-40"
-                      >
-                        Supprimer
-                      </button>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addPageAfter(pageIndex)}
+                          className="rounded-2xl bg-black px-4 py-2 text-sm font-black text-white"
+                        >
+                          Ajouter une page
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removePage(pageIndex)}
+                          disabled={pages.length === 1}
+                          className="rounded-2xl bg-red-50 px-4 py-2 text-sm font-black text-red-600 disabled:opacity-40"
+                        >
+                          Supprimer
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_620px] 2xl:items-start">
@@ -2024,7 +2296,7 @@ export default function AlbumPage() {
                         </p>
                       )}
                       <div className="max-h-[820px] overflow-auto pr-1">
-                        {renderCalendarPosterPreview()}
+                        {renderCalendarPosterPreview("screen")}
                       </div>
                     </>
                   )}
@@ -2045,6 +2317,7 @@ export default function AlbumPage() {
                           <p>{calendarPosterSelectedCount}/3 photo(s) choisie(s)</p>
                         )}
                         <p>Export PDF disponible via l’impression du navigateur.</p>
+                        <p>Pack PNG : images prêtes à importer chez un imprimeur.</p>
                       </div>
                     </div>
 
@@ -2195,7 +2468,7 @@ export default function AlbumPage() {
                     {exportingImages ? "Préparation du ZIP..." : "Télécharger le pack PNG"}
                   </button>
                   <p className="text-center text-sm font-semibold text-gray-500">
-                    Le pack PNG est prévu pour importer les pages chez un imprimeur.
+                    Le pack PNG contient la couverture avant et les pages intérieures, prêtes à importer chez un imprimeur.
                   </p>
                 </div>
               </div>
@@ -2232,12 +2505,12 @@ export default function AlbumPage() {
           </div>
         ) : (
           <div className="mx-auto grid justify-items-center gap-8">
-            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass(format)}`}>
-              {renderCoverPreview(getAlbumPdfPreviewClass(format))}
+            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
+              {renderCoverPreview(getAlbumPdfPreviewClass())}
             </div>
 
-            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass(format)}`}>
-              <div className={`${getAlbumPdfPreviewClass(format)} rounded-2xl bg-[#fffdf8] p-10 shadow-sm`}>
+            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
+              <div className={`${getAlbumPdfPreviewClass()} rounded-2xl bg-[#fffdf8] p-10 shadow-sm`}>
                 <p className={`mb-5 text-xs font-black uppercase tracking-[0.18em] ${selectedTheme.textClass}`}>
                   Verso de couverture
                 </p>
@@ -2250,18 +2523,18 @@ export default function AlbumPage() {
             {pages.map((page, pageIndex) => (
               <div
                 key={`pdf-page-${page.id}`}
-                className={`pdf-page pdf-page-album ${getAlbumPdfPageClass(format)}`}
+                className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}
               >
                 {renderPagePreview(
                   page,
                   pageIndex,
-                  getAlbumPdfPreviewClass(format)
+                  getAlbumPdfPreviewClass()
                 )}
               </div>
             ))}
 
-            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass(format)}`}>
-              <div className={`${getAlbumPdfPreviewClass(format)} rounded-2xl bg-[#fffdf8] p-10 shadow-sm`}>
+            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
+              <div className={`${getAlbumPdfPreviewClass()} rounded-2xl bg-[#fffdf8] p-10 shadow-sm`}>
                 <p className={`mb-5 text-xs font-black uppercase tracking-[0.18em] ${selectedTheme.textClass}`}>
                   Texte de fin
                 </p>
@@ -2274,62 +2547,55 @@ export default function AlbumPage() {
         )}
       </div>
 
-      <div ref={imageExportRef} className="image-export-area" aria-hidden="true">
-        {albumType === "calendar" ? (
-          <div className="grid gap-8">
-            {calendarProduct === "monthly" ? (
-              calendarMonths.map((month, monthIndex) => (
+      {renderingImageExport && (
+        <div ref={imageExportRef} className="image-export-area" aria-hidden="true">
+          {albumType === "calendar" ? (
+            <div className="grid gap-8">
+              {calendarProduct === "monthly" ? (
+                calendarMonths.map((month, monthIndex) => (
+                  <div
+                    key={`export-month-${monthNames[monthIndex]}`}
+                    data-export-name={`${String(monthIndex + 1).padStart(2, "0")}-${slugifyFilePart(monthNames[monthIndex])}-${calendarYear}.png`}
+                  >
+                    {renderCalendarMonthPreview(
+                      month,
+                      monthIndex,
+                      "mx-auto w-[640px] max-w-none shrink-0"
+                    )}
+                  </div>
+                ))
+              ) : (
                 <div
-                  key={`export-month-${monthNames[monthIndex]}`}
-                  data-export-name={`${String(monthIndex + 1).padStart(2, "0")}-${slugifyFilePart(monthNames[monthIndex])}-${calendarYear}.png`}
+                  data-export-name={`calendrier-${calendarYear}-${slugifyFilePart(selectedCalendarProduct.label)}.png`}
                 >
-                  {renderCalendarMonthPreview(
-                    month,
-                    monthIndex,
-                    "mx-auto w-[640px] max-w-none shrink-0"
+                  {renderCalendarPosterPreview()}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-8">
+              <div data-export-name="01-couverture-avant.png">
+                {renderCoverPreview(getAlbumImageExportPreviewClass(), true)}
+              </div>
+
+              {pages.map((page, pageIndex) => (
+                <div
+                  key={`export-page-${page.id}`}
+                  data-export-name={`${String(pageIndex + 2).padStart(2, "0")}-page-${pageIndex + 1}-${page.photoIds.length}-sur-${page.photosPerPage}-photos.png`}
+                >
+                  {renderPagePreview(
+                    page,
+                    pageIndex,
+                    getAlbumImageExportPreviewClass(),
+                    true
                   )}
                 </div>
-              ))
-            ) : (
-              <div
-                data-export-name={`calendrier-${calendarYear}-${slugifyFilePart(selectedCalendarProduct.label)}.png`}
-              >
-                {renderCalendarPosterPreview()}
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="grid gap-8">
-            <div data-export-name="01-couverture-avant.png">
-              {renderCoverPreview(getAlbumPdfPreviewClass(format))}
-            </div>
+              ))}
 
-            {pages.map((page, pageIndex) => (
-              <div
-                key={`export-page-${page.id}`}
-                data-export-name={`${String(pageIndex + 2).padStart(2, "0")}-page-${pageIndex + 1}.png`}
-              >
-                {renderPagePreview(
-                  page,
-                  pageIndex,
-                  getAlbumPdfPreviewClass(format)
-                )}
-              </div>
-            ))}
-
-            <div data-export-name={`${String(pages.length + 2).padStart(2, "0")}-dos-couverture.png`}>
-              <div className={`${getAlbumPdfPreviewClass(format)} rounded-2xl bg-[#fffdf8] p-10 shadow-sm`}>
-                <p className={`mb-5 text-xs font-black uppercase tracking-[0.18em] ${selectedTheme.textClass}`}>
-                  Dos de couverture
-                </p>
-                <p className="text-lg font-semibold leading-relaxed text-gray-600">
-                  {closingText}
-                </p>
-              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       <SiteFooter />
     </main>

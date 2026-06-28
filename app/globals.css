@@ -34,10 +34,13 @@ html {
 }
 
 .image-export-area {
-  left: -10000px;
+  left: -20000px;
+  opacity: 0.01;
+  overflow: visible;
   pointer-events: none;
   position: fixed;
   top: 0;
+  width: max-content;
   z-index: -1;
 }
 

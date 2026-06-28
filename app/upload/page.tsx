@@ -376,7 +376,24 @@ export default function UploadPage() {
                     </p>
                   )}
 
-                  {restoredImage && (
+                  {restoredImage && demoTitle && (
+                    <div className="grid gap-3">
+                      <p className="text-center text-sm font-semibold text-gray-500">
+                        Cet exemple montre le rendu gratuit filigrané. Pour créer votre album, importez une photo de famille depuis votre compte.
+                      </p>
+                      <label className="block cursor-pointer rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 px-5 py-4 text-center font-bold text-white">
+                        Importer ma propre photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleFile}
+                        />
+                      </label>
+                    </div>
+                  )}
+
+                  {restoredImage && !demoTitle && (
                     <>
                       <div className="grid sm:grid-cols-3 gap-3">
                       <Link
