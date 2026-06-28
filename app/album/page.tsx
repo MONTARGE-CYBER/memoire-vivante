@@ -69,7 +69,7 @@ const albumTypes = [
   {
     id: "calendar",
     label: "Album calendrier",
-    detail: "Une base pour organiser les photos par mois, à finaliser plus tard.",
+    detail: "Créez un calendrier familial à partir de vos photos restaurées.",
   },
   {
     id: "genealogy",

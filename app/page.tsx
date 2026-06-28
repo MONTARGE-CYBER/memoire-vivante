@@ -26,7 +26,7 @@ const benefits = [
   "Galerie privée par utilisateur",
   "Téléchargement HD",
   "Suppression des restaurations",
-  "Album cadeau en préparation",
+  "Album personnalisé",
 ];
 
 const plans = [
