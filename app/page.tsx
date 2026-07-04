@@ -4,8 +4,10 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import BackToTopButton from "@/components/BackToTopButton";
 import BeforeAfterSlider from "@/components/BeforeAfterSlider";
+import BuyCreditsButton from "@/components/BuyCreditsButton";
 import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
+import { creditPacks } from "@/lib/creditPacks";
 
 const steps = [
   {
@@ -27,28 +29,6 @@ const benefits = [
   "Exports album et calendrier",
   "Suppression des restaurations",
   "Album personnalisé",
-];
-
-const plans = [
-  {
-    name: "Découverte",
-    price: "5,90€",
-    text: "Pour tester le rendu ou créer un calendrier annuel simple.",
-    detail: "5 crédits · jusqu’à 5 photos restaurées",
-  },
-  {
-    name: "Album famille",
-    price: "19,90€",
-    text: "Pour préparer un album carré de 24 pages avec une vraie sélection familiale.",
-    detail: "25 crédits · idéal pour 25 à 30 photos",
-    featured: true,
-  },
-  {
-    name: "Grande mémoire",
-    price: "39,90€",
-    text: "Pour restaurer une collection plus complète avant album, calendrier ou archive familiale.",
-    detail: "60 crédits · grande galerie souvenir",
-  },
 ];
 
 const faqs = [
@@ -367,9 +347,9 @@ export default function Home() {
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
+          {creditPacks.map((plan) => (
             <div
-              key={plan.name}
+              key={plan.id}
               className={
                 plan.featured
                   ? "bg-gradient-to-br from-purple-600 to-pink-500 text-white rounded-[2rem] p-8 shadow-2xl transition duration-300 hover:-translate-y-2"
@@ -385,22 +365,22 @@ export default function Home() {
               <h3 className="text-2xl font-bold mb-4">{plan.name}</h3>
               <p className="text-5xl font-black mb-6">{plan.price}</p>
               <p className={plan.featured ? "text-purple-100 mb-4" : "text-gray-600 mb-4"}>
-                {plan.text}
+                {plan.description}
               </p>
               <p className={plan.featured ? "font-bold mb-8" : "font-bold text-gray-900 mb-8"}>
-                {plan.detail}
+                {plan.credits} crédits · jusqu’à {plan.credits} photos restaurées
               </p>
 
-              <Link
-                href="/upload"
+              <BuyCreditsButton
+                packId={plan.id}
                 className={
                   plan.featured
                     ? "block w-full text-center py-4 rounded-xl bg-white text-purple-700 font-bold"
                     : "block w-full text-center py-4 rounded-xl bg-gray-100 font-semibold"
                 }
               >
-                Commencer
-              </Link>
+                Acheter ce pack
+              </BuyCreditsButton>
             </div>
           ))}
         </div>

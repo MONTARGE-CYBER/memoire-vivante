@@ -8,6 +8,8 @@ import SiteNav from "@/components/SiteNav";
 import { supabase } from "@/lib/supabase";
 
 type DashboardStats = {
+  credits: number;
+  transactions: CreditTransaction[];
   latestAlbum: {
     albumType: string;
     title: string;
@@ -17,9 +19,37 @@ type DashboardStats = {
   restorationsCount: number;
 };
 
+type CreditTransaction = {
+  amount: number;
+  created_at: string;
+  description: string | null;
+  id: string;
+  restoration_id: number | null;
+  type: "purchase" | "unlock" | "admin_adjustment";
+};
+
+function formatTransactionLabel(transaction: CreditTransaction) {
+  if (transaction.type === "purchase") return "Achat de crédits";
+  if (transaction.type === "unlock") return "Photo débloquée sans filigrane";
+  return "Ajustement de crédits";
+}
+
+function formatTransactionDetail(transaction: CreditTransaction) {
+  if (transaction.type === "purchase") {
+    return "Pack ajouté après paiement Stripe.";
+  }
+
+  if (transaction.type === "unlock" && transaction.restoration_id) {
+    return `Restauration #${transaction.restoration_id}`;
+  }
+
+  return transaction.description || "Mouvement de crédits";
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [checkoutStatus, setCheckoutStatus] = useState<"cancelled" | "success" | null>(null);
   const [loading, setLoading] = useState(true);
   const latestAlbumDate = stats?.latestAlbum
     ? new Intl.DateTimeFormat("fr-FR", {
@@ -61,7 +91,29 @@ export default function DashboardPage() {
         console.warn(albumError);
       }
 
+      const { data: creditBalance, error: creditError } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (creditError) {
+        console.warn("Credit balance unavailable", creditError);
+      }
+
+      const { data: transactions, error: transactionsError } = await supabase
+        .from("credit_transactions")
+        .select("id, amount, type, restoration_id, description, created_at")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (transactionsError) {
+        console.warn("Credit transactions unavailable", transactionsError);
+      }
+
       setStats({
+        credits: creditBalance?.balance ?? 0,
         email: user.email ?? "Compte utilisateur",
         latestAlbum: latestAlbum
           ? {
@@ -71,12 +123,24 @@ export default function DashboardPage() {
             }
           : null,
         restorationsCount: count ?? 0,
+        transactions: (transactions || []) as CreditTransaction[],
       });
       setLoading(false);
     }
 
     loadDashboard();
   }, [router]);
+
+  useEffect(() => {
+    const checkout = new URLSearchParams(window.location.search).get("checkout");
+
+    if (checkout === "success" || checkout === "cancelled") {
+      // The checkout query param only exists in the browser after Stripe redirects back.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setCheckoutStatus(checkout);
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
@@ -98,6 +162,27 @@ export default function DashboardPage() {
               : stats?.email}
           </p>
         </div>
+
+        {checkoutStatus && (
+          <div
+            className={`mb-8 rounded-[1.5rem] border p-5 shadow-sm ${
+              checkoutStatus === "success"
+                ? "border-green-100 bg-green-50 text-green-800"
+                : "border-amber-100 bg-amber-50 text-amber-800"
+            }`}
+          >
+            <p className="font-black">
+              {checkoutStatus === "success"
+                ? "Paiement confirmé"
+                : "Paiement annulé"}
+            </p>
+            <p className="mt-1 text-sm font-semibold">
+              {checkoutStatus === "success"
+                ? "Vos crédits ont été ajoutés à votre solde."
+                : "Aucun crédit n’a été ajouté. Vous pouvez relancer un achat quand vous le souhaitez."}
+            </p>
+          </div>
+        )}
 
         <div className="grid lg:grid-cols-2 gap-6 mb-10">
           <Link
@@ -165,10 +250,10 @@ export default function DashboardPage() {
               Packs
             </p>
             <p className="text-3xl font-black text-purple-600">
-              Crédits
+              {loading ? "..." : stats?.credits}
             </p>
             <p className="mt-3 text-sm font-semibold text-gray-500">
-              Achetez des crédits pour débloquer plus de photos sans filigrane.
+              crédit(s) disponible(s) pour débloquer des photos sans filigrane.
             </p>
             <Link
               href="/#tarifs"
@@ -191,6 +276,68 @@ export default function DashboardPage() {
                 : "Aucun album sauvegardé"}
             </p>
           </div>
+        </div>
+
+        <div className="bg-white/85 backdrop-blur-xl rounded-[2rem] p-6 sm:p-8 shadow-sm border border-white/60">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="inline-block rounded-full bg-purple-100 px-4 py-2 text-sm font-black text-purple-700 mb-4">
+                Historique
+              </p>
+              <h2 className="text-2xl sm:text-3xl font-black">
+                Mouvements de crédits
+              </h2>
+            </div>
+            <Link
+              href="/#tarifs"
+              className="rounded-xl bg-purple-600 px-5 py-3 text-center text-sm font-bold text-white transition hover:-translate-y-0.5"
+            >
+              Acheter des crédits
+            </Link>
+          </div>
+
+          {loading ? (
+            <p className="text-gray-600">Chargement de l’historique...</p>
+          ) : stats?.transactions.length ? (
+            <div className="divide-y divide-gray-100">
+              {stats.transactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="grid gap-3 py-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                >
+                  <div>
+                    <p className="font-black">
+                      {formatTransactionLabel(transaction)}
+                    </p>
+                    <p className="mt-1 text-sm font-semibold text-gray-500">
+                      {formatTransactionDetail(transaction)} ·{" "}
+                      {new Intl.DateTimeFormat("fr-FR", {
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        month: "2-digit",
+                        year: "numeric",
+                      }).format(new Date(transaction.created_at))}
+                    </p>
+                  </div>
+                  <p
+                    className={`rounded-full px-4 py-2 text-center text-sm font-black ${
+                      transaction.amount > 0
+                        ? "bg-green-100 text-green-700"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    {transaction.amount > 0 ? "+" : ""}
+                    {transaction.amount} crédit(s)
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed border-purple-100 bg-purple-50/50 p-6 text-sm font-semibold text-gray-600">
+              Aucun mouvement de crédits pour le moment.
+            </div>
+          )}
         </div>
       </section>
 

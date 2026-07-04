@@ -36,7 +36,7 @@ export async function downloadRestoration(id: number) {
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "memoire-vivante-hd.png";
+  link.download = "memoire-vivante-sans-filigrane.png";
   document.body.appendChild(link);
   link.click();
   link.remove();

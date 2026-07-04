@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     const { data: restoration, error } = await supabaseAdmin
       .from("restorations")
-      .select("id, restored_url, user_id")
+      .select("id, restored_url, user_id, unlocked_at")
       .eq("id", id)
       .single();
 
@@ -53,13 +53,33 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json(
-      {
-        error: "download locked",
-        message: "Le téléchargement sans filigrane sera débloqué avec les crédits.",
+    if (!restoration.unlocked_at) {
+      return NextResponse.json(
+        {
+          error: "download locked",
+          message: "Le téléchargement sans filigrane sera débloqué avec les crédits.",
+        },
+        { status: 402 }
+      );
+    }
+
+    const imageResponse = await fetch(restoration.restored_url);
+
+    if (!imageResponse.ok) {
+      return NextResponse.json(
+        { error: "Restored image unavailable" },
+        { status: 502 }
+      );
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+
+    return new NextResponse(imageBuffer, {
+      headers: {
+        "Content-Disposition": `attachment; filename="memoire-vivante-${id}.png"`,
+        "Content-Type": imageResponse.headers.get("content-type") || "image/png",
       },
-      { status: 402 }
-    );
+    });
 
   } catch (error) {
     console.error("DOWNLOAD ERROR:", error);

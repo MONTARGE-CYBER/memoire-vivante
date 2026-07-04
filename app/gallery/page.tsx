@@ -7,18 +7,22 @@ import { supabase } from "@/lib/supabase";
 import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
 import WatermarkedImage from "@/components/WatermarkedImage";
+import { downloadRestoration } from "@/lib/downloadRestoration";
 
 type Restoration = {
   id: number;
   original_url: string;
   restored_url: string;
   user_id: string | null;
+  unlocked_at: string | null;
 };
 
 export default function GalleryPage() {
   const router = useRouter();
   const [items, setItems] = useState<Restoration[]>([]);
   const [loading, setLoading] = useState(true);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [unlockingId, setUnlockingId] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadGallery() {
@@ -42,6 +46,17 @@ export default function GalleryPage() {
         console.error(error);
       }
 
+      const { data: creditBalance, error: creditError } = await supabase
+        .from("user_credits")
+        .select("balance")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (creditError) {
+        console.warn("Credit balance unavailable", creditError);
+      }
+
+      setCredits(creditBalance?.balance ?? 0);
       setItems(data || []);
       setLoading(false);
     }
@@ -85,6 +100,46 @@ export default function GalleryPage() {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }
 
+  async function unlockRestoration(id: number) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      alert("Vous devez être connecté.");
+      return;
+    }
+
+    setUnlockingId(id);
+
+    const response = await fetch("/api/unlock-restoration", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    const result = await response.json();
+
+    setUnlockingId(null);
+
+    if (!response.ok || !result.success) {
+      alert(result.error || "Impossible de débloquer cette photo.");
+      return;
+    }
+
+    setCredits(result.creditsRemaining);
+    setItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, unlocked_at: result.unlockedAt }
+          : item
+      )
+    );
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
       <SiteNav />
@@ -113,9 +168,10 @@ export default function GalleryPage() {
               Débloquez vos photos sans filigrane
             </h2>
             <p className="mt-2 text-gray-600">
-              1 crédit = 1 photo restaurée sans filigrane. Vous pourrez acheter
-              des crédits supplémentaires si vous souhaitez préparer plus de
-              photos pour un album ou un calendrier.
+              1 crédit = 1 photo restaurée sans filigrane. Solde actuel :{" "}
+              <strong>{credits === null ? "..." : credits}</strong> crédit(s).
+              Vous pourrez acheter des crédits supplémentaires si vous souhaitez
+              préparer plus de photos pour un album ou un calendrier.
             </p>
           </div>
 
@@ -178,15 +234,27 @@ export default function GalleryPage() {
                     <div className="rounded-2xl bg-white p-3 shadow-sm">
                       <div className="mb-2 flex items-center justify-between">
                         <p className="font-black">Restaurée</p>
-                        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-black text-green-700">
-                          Après
+                        <span className={`rounded-full px-3 py-1 text-xs font-black ${
+                          item.unlocked_at
+                            ? "bg-purple-100 text-purple-700"
+                            : "bg-green-100 text-green-700"
+                        }`}>
+                          {item.unlocked_at ? "Débloquée" : "Après"}
                         </span>
                       </div>
-                      <WatermarkedImage
-                        src={item.restored_url}
-                        alt={`Photo restaurée ${item.id} avec filigrane`}
-                        className="h-64"
-                      />
+                      {item.unlocked_at ? (
+                        <img
+                          src={item.restored_url}
+                          alt={`Photo restaurée ${item.id}`}
+                          className="h-64 w-full rounded-2xl bg-black/5 object-contain"
+                        />
+                      ) : (
+                        <WatermarkedImage
+                          src={item.restored_url}
+                          alt={`Photo restaurée ${item.id} avec filigrane`}
+                          className="h-64"
+                        />
+                      )}
                     </div>
                   </div>
                 </div>
@@ -199,12 +267,24 @@ export default function GalleryPage() {
                     Utiliser dans un album
                   </Link>
 
-                  <button
-                    disabled
-                    className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold opacity-50"
-                  >
-                    Sans filigrane avec crédits
-                  </button>
+                  {item.unlocked_at ? (
+                    <button
+                      onClick={() => downloadRestoration(item.id)}
+                      className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold transition hover:scale-105"
+                    >
+                      Télécharger sans filigrane
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => unlockRestoration(item.id)}
+                      disabled={unlockingId === item.id}
+                      className="text-center px-5 py-4 rounded-xl bg-black text-white font-semibold transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {unlockingId === item.id
+                        ? "Déblocage..."
+                        : "Débloquer avec 1 crédit"}
+                    </button>
+                  )}
 
                   <Link
                     href="/upload"

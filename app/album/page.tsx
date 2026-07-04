@@ -15,6 +15,7 @@ type Restoration = {
   original_url: string;
   restored_url: string;
   user_id: string | null;
+  unlocked_at: string | null;
 };
 
 type AlbumPageConfig = {
@@ -864,6 +865,37 @@ export default function AlbumPage() {
     }));
   }
 
+  function renderRestoredPhoto(
+    photo: Restoration,
+    alt: string,
+    className: string,
+    imageClassName = "object-cover",
+    watermarkProps: {
+      badgeClassName?: string;
+      watermarkClassName?: string;
+    } = {}
+  ) {
+    if (photo.unlocked_at) {
+      return (
+        <img
+          src={photo.restored_url}
+          alt={alt}
+          className={`${className} ${imageClassName} rounded-2xl`}
+        />
+      );
+    }
+
+    return (
+      <WatermarkedImage
+        src={photo.restored_url}
+        alt={`${alt} avec filigrane`}
+        className={className}
+        imageClassName={imageClassName}
+        {...watermarkProps}
+      />
+    );
+  }
+
   function renderPagePreview(
     page: AlbumPageConfig,
     pageIndex: number,
@@ -893,14 +925,12 @@ export default function AlbumPage() {
                   style={getPageExportSlotStyle(page.photosPerPage, slotIndex)}
                 >
                   {photo ? (
-                    <WatermarkedImage
-                      src={photo.restored_url}
-                      alt={`Page ${pageIndex + 1} photo ${slotIndex + 1}`}
-                      className="h-full w-full bg-white shadow-sm"
-                      imageClassName={getCalendarPhotoFitClass(
-                        page.photoFits[photo.id] ?? "cover"
-                      )}
-                    />
+                    renderRestoredPhoto(
+                      photo,
+                      `Page ${pageIndex + 1} photo ${slotIndex + 1}`,
+                      "h-full w-full bg-white shadow-sm",
+                      getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
+                    )
                   ) : (
                     <span
                       className={`block h-full w-full rounded-2xl border-2 border-dashed ${selectedTheme.borderClass}`}
@@ -932,13 +962,17 @@ export default function AlbumPage() {
 
         <div className={getPageGridClass(page.photosPerPage)}>
           {pagePhotos.map((photo, photoIndex) => (
-            <WatermarkedImage
+            <div
               key={`${page.id}-${photo.id}`}
-              src={photo.restored_url}
-              alt={`Page ${pageIndex + 1} photo ${photo.id}`}
               className={`${getPageImageClass(page.photosPerPage, photoIndex)} ${getPhotoStyleClass(pageStyle)}`}
-              imageClassName={getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")}
-            />
+            >
+              {renderRestoredPhoto(
+                photo,
+                `Page ${pageIndex + 1} photo ${photo.id}`,
+                "h-full w-full",
+                getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
+              )}
+            </div>
           ))}
 
           {pagePhotos.length === 0 &&
@@ -987,12 +1021,12 @@ export default function AlbumPage() {
         </div>
 
         {monthPhoto ? (
-          <WatermarkedImage
-            src={monthPhoto.restored_url}
-            alt={`Photo calendrier ${monthNames[monthIndex]}`}
-            className="h-52"
-            imageClassName={getCalendarPhotoFitClass(month.photoFit)}
-          />
+          renderRestoredPhoto(
+            monthPhoto,
+            `Photo calendrier ${monthNames[monthIndex]}`,
+            "h-52",
+            getCalendarPhotoFitClass(month.photoFit)
+          )
         ) : (
           <div className={`h-52 rounded-2xl ${placeholderFrames[monthIndex % placeholderFrames.length]}`} />
         )}
@@ -1118,15 +1152,15 @@ export default function AlbumPage() {
           {isPortrait ? (
             <div className={`grid ${photoAreaClass} grid-cols-[1.15fr_0.85fr] gap-3 overflow-hidden`}>
               {posterSlots[0] ? (
-                <WatermarkedImage
-                  src={posterSlots[0].restored_url}
-                  alt="Photo principale affiche calendrier"
-                  className="h-full min-h-0"
-                  imageClassName={getCalendarPhotoFitClass(
+                renderRestoredPhoto(
+                  posterSlots[0],
+                  "Photo principale affiche calendrier",
+                  "h-full min-h-0",
+                  getCalendarPhotoFitClass(
                     calendarPosterPhotoFits[posterSlots[0].id] ?? "cover"
-                  )}
-                  {...posterImageProps}
-                />
+                  ),
+                  posterImageProps
+                )
               ) : (
                 <span className="grid h-full min-h-0 place-items-center rounded-2xl border-2 border-dashed border-white/80 bg-white/45 text-xs font-black text-gray-500">
                   Photo 1 à choisir
@@ -1136,16 +1170,17 @@ export default function AlbumPage() {
               <div className="grid h-full min-h-0 grid-rows-2 gap-3 overflow-hidden">
                 {[posterSlots[1], posterSlots[2]].map((photo, index) =>
                   photo ? (
-                    <WatermarkedImage
-                      key={`poster-side-${photo.id}`}
-                      src={photo.restored_url}
-                      alt={`Photo affiche calendrier ${index + 2}`}
-                      className="h-full min-h-0"
-                      imageClassName={getCalendarPhotoFitClass(
-                        calendarPosterPhotoFits[photo.id] ?? "cover"
+                    <div key={`poster-side-${photo.id}`} className="h-full min-h-0">
+                      {renderRestoredPhoto(
+                        photo,
+                        `Photo affiche calendrier ${index + 2}`,
+                        "h-full min-h-0",
+                        getCalendarPhotoFitClass(
+                          calendarPosterPhotoFits[photo.id] ?? "cover"
+                        ),
+                        posterImageProps
                       )}
-                      {...posterImageProps}
-                    />
+                    </div>
                   ) : (
                     <span
                       key={`poster-side-empty-${index}`}
@@ -1161,16 +1196,17 @@ export default function AlbumPage() {
             <div className={`grid ${photoAreaClass} grid-cols-3 gap-3 overflow-hidden`}>
               {posterSlots.map((photo, index) =>
                 photo ? (
-                  <WatermarkedImage
-                    key={`poster-landscape-${photo.id}`}
-                    src={photo.restored_url}
-                    alt={`Photo affiche calendrier ${index + 1}`}
-                    className="h-full min-h-0"
-                    imageClassName={getCalendarPhotoFitClass(
-                      calendarPosterPhotoFits[photo.id] ?? "cover"
+                  <div key={`poster-landscape-${photo.id}`} className="h-full min-h-0">
+                    {renderRestoredPhoto(
+                      photo,
+                      `Photo affiche calendrier ${index + 1}`,
+                      "h-full min-h-0",
+                      getCalendarPhotoFitClass(
+                        calendarPosterPhotoFits[photo.id] ?? "cover"
+                      ),
+                      posterImageProps
                     )}
-                    {...posterImageProps}
-                  />
+                  </div>
                 ) : (
                   <span
                     key={`poster-landscape-empty-${index}`}
@@ -1264,12 +1300,12 @@ export default function AlbumPage() {
             <div className="my-5 w-full max-w-[320px] sm:my-6">
               {coverPhoto ? (
                 <div className="rotate-[-1deg] rounded-[1.25rem] bg-white p-3 shadow-xl">
-                  <WatermarkedImage
-                    src={coverPhoto.restored_url}
-                    alt="Photo principale de couverture"
-                    className="h-40 sm:h-52"
-                    imageClassName={`${getCalendarPhotoFitClass(coverPhotoFit)} rounded-2xl`}
-                  />
+                  {renderRestoredPhoto(
+                    coverPhoto,
+                    "Photo principale de couverture",
+                    "h-40 sm:h-52",
+                    `${getCalendarPhotoFitClass(coverPhotoFit)} rounded-2xl`
+                  )}
                 </div>
               ) : (
                 <div className={`h-40 rounded-[1.25rem] border-2 border-dashed ${selectedTheme.borderClass} bg-white/55 p-3 shadow-inner sm:h-52`}>
@@ -1656,9 +1692,11 @@ export default function AlbumPage() {
                                             alt={`Photo ${item.id}`}
                                             className="h-full w-full object-contain"
                                           />
-                                          <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
-                                            Mémoire Vivante
-                                          </span>
+                                          {!item.unlocked_at && (
+                                            <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
+                                              Mémoire Vivante
+                                            </span>
+                                          )}
                                         </div>
                                         <div className="p-3">
                                           <span className={`text-xs font-black ${selected ? "text-purple-700" : "text-gray-500"}`}>
@@ -1755,9 +1793,11 @@ export default function AlbumPage() {
                                         alt={`Photo affiche ${item.id}`}
                                         className="h-full w-full object-contain"
                                       />
-                                      <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
-                                        Mémoire Vivante
-                                      </span>
+                                      {!item.unlocked_at && (
+                                        <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">
+                                          Mémoire Vivante
+                                        </span>
+                                      )}
                                     </div>
                                     <div className="p-3">
                                       <span className={`text-xs font-black ${selected ? "text-purple-700" : "text-gray-500"}`}>
@@ -1958,9 +1998,11 @@ export default function AlbumPage() {
                                   alt={`Photo de couverture ${item.id}`}
                                   className="h-full w-full object-cover"
                                 />
-                                <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/80">
-                                  Mémoire Vivante
-                                </span>
+                                {!item.unlocked_at && (
+                                  <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/80">
+                                    Mémoire Vivante
+                                  </span>
+                                )}
                               </div>
                               <div className="p-3">
                                 <span className={`text-xs font-black ${selected ? "text-purple-700" : "text-gray-500"}`}>
@@ -2184,9 +2226,11 @@ export default function AlbumPage() {
                                         alt={`Photo ${item.id}`}
                                         className="h-full w-full object-cover"
                                       />
-                                      <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/80">
-                                        Mémoire Vivante
-                                      </span>
+                                      {!item.unlocked_at && (
+                                        <span className="pointer-events-none absolute inset-x-2 top-1/2 -rotate-12 rounded-full bg-black/25 px-2 py-1 text-center text-[10px] font-black uppercase tracking-[0.14em] text-white/80">
+                                          Mémoire Vivante
+                                        </span>
+                                      )}
                                     </div>
                                     <div className="p-3">
                                       <span className={`text-xs font-black ${selected ? "text-purple-700" : "text-gray-500"}`}>
