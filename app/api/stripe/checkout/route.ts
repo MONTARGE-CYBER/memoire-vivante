@@ -72,7 +72,7 @@ export async function POST(req: Request) {
             currency: "eur",
             product_data: {
               name: `Mémoire Vivante - ${pack.name}`,
-              description: `${pack.credits} crédits photo`,
+              description: `${pack.credits} crédits de déblocage photo`,
             },
             unit_amount: pack.priceCents,
           },

@@ -23,30 +23,36 @@ export default function BuyCreditsButton({
     } = await supabase.auth.getSession();
 
     if (!session) {
-      window.location.href = "/login";
+      window.location.href = `/login?next=${encodeURIComponent("/#tarifs")}`;
       return;
     }
 
     setLoading(true);
 
-    const response = await fetch("/api/stripe/checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ packId }),
-    });
+    try {
+      const response = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ packId }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    if (!response.ok || !result.url) {
+      if (!response.ok || !result.url) {
+        setLoading(false);
+        alert(result.error || "Impossible d’ouvrir le paiement.");
+        return;
+      }
+
+      window.location.href = result.url;
+    } catch (error) {
+      console.error(error);
       setLoading(false);
-      alert(result.error || "Impossible d’ouvrir le paiement.");
-      return;
+      alert("Impossible d’ouvrir le paiement. Vérifiez votre connexion puis réessayez.");
     }
-
-    window.location.href = result.url;
   }
 
   return (

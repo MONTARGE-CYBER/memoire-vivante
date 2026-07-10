@@ -12,33 +12,40 @@ export async function downloadRestoration(id: number) {
     return;
   }
 
-  const response = await fetch("/api/download", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ id }),
-  });
+  let response: Response;
 
-  if (!response.ok) {
-    if (response.status === 402) {
-      alert("Le téléchargement sans filigrane sera disponible avec les crédits.");
+  try {
+    response = await fetch("/api/download", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({ id }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 402) {
+        alert("Débloquez cette photo avec 1 crédit pour la télécharger sans filigrane.");
+        return;
+      }
+
+      alert("Erreur lors du téléchargement.");
       return;
     }
 
-    alert("Erreur lors du téléchargement.");
-    return;
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "memoire-vivante-sans-filigrane.png";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  } catch (error) {
+    console.error(error);
+    alert("Erreur lors du téléchargement. Vérifiez votre connexion puis réessayez.");
   }
-
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-
-  link.href = url;
-  link.download = "memoire-vivante-sans-filigrane.png";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
 }

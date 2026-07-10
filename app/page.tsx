@@ -35,7 +35,7 @@ const faqs = [
   {
     question: "Mes photos sont-elles visibles par les autres utilisateurs ?",
     answer:
-      "Non. La galerie affiche uniquement les restaurations liées à votre compte. Le stockage public sera renforcé plus tard avec des URLs privées avant la mise en production finale.",
+      "Non. La galerie affiche uniquement les restaurations liées à votre compte. Chaque utilisateur retrouve ses propres photos, albums et crédits dans son espace sécurisé.",
   },
   {
     question: "Quelle est la précision de la colorisation par IA ?",
@@ -50,22 +50,22 @@ const faqs = [
   {
     question: "Est-il possible de tester gratuitement la restauration d’une photo ?",
     answer:
-      "Oui. Vous pouvez tester le rendu avec des photos proposées ou importer votre propre image. L’aperçu gratuit affiche un filigrane ; la version sans filigrane sera débloquée avec les crédits.",
+      "Oui. Vous pouvez tester le rendu avec des photos proposées ou importer votre propre image. L’aperçu gratuit affiche un filigrane ; la version sans filigrane se débloque avec les crédits.",
   },
   {
     question: "Puis-je télécharger mes restaurations ?",
     answer:
-      "Vous pouvez utiliser vos restaurations dans la galerie, les albums et les calendriers. Le téléchargement sans filigrane sera réservé aux photos débloquées avec des crédits.",
+      "Oui. Les photos débloquées avec des crédits peuvent être téléchargées sans filigrane et utilisées dans vos albums ou calendriers.",
   },
   {
     question: "Que débloquent les crédits ?",
     answer:
-      "Un crédit débloque une photo restaurée sans filigrane. Le pack Découverte couvre quelques photos ou un calendrier 3 photos ; le pack Album famille est pensé pour un album carré 24 pages.",
+      "Un crédit débloque une photo restaurée sans filigrane. Le pack Découverte couvre quelques photos ou un calendrier 3 photos ; le pack Album famille débloque 25 photos pour préparer un album carré.",
   },
   {
     question: "Puis-je acheter plus de crédits ensuite ?",
     answer:
-      "Oui. L’objectif est de permettre l’achat de crédits supplémentaires depuis Mes photos, Mon album et le tableau de bord dès que le paiement sera activé.",
+      "Oui. Vous pouvez acheter des crédits depuis les packs proposés, puis les utiliser pour débloquer vos photos restaurées sans filigrane.",
   },
   {
     question: "Les albums imprimables sont-ils déjà disponibles ?",
@@ -94,6 +94,19 @@ const testimonials = [
     context: "Cadeau souvenir",
   },
 ];
+
+function CalendarHomePreview() {
+  return (
+    <div className="relative">
+      <div className="absolute -inset-4 rounded-[2rem] bg-purple-500/20 blur-3xl" />
+      <img
+        src="/examples/calendar-classique-familial.png"
+        alt="Exemple de calendrier familial personnalisé"
+        className="relative w-full rounded-[2rem] shadow-2xl"
+      />
+    </div>
+  );
+}
 
 export default function Home() {
   return (
@@ -148,7 +161,7 @@ export default function Home() {
                 href="/upload"
                 className="px-8 py-5 rounded-2xl bg-purple-600 text-white font-bold text-lg shadow-xl shadow-purple-300 hover:bg-purple-700 transition duration-300 hover:-translate-y-1 hover:shadow-2xl"
               >
-                Commencer mon album
+                Restaurer une photo
               </Link>
 
               <Link
@@ -291,6 +304,54 @@ export default function Home() {
         viewport={{ once: true }}
         transition={{ duration: 0.9 }}
       >
+        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="order-2 lg:order-1">
+            <CalendarHomePreview />
+          </div>
+
+          <div className="order-1 lg:order-2">
+            <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
+              Calendriers familiaux
+            </span>
+
+            <h2 className="text-4xl sm:text-5xl font-black mb-6 leading-tight">
+              Offrez une année entière de souvenirs restaurés
+            </h2>
+
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              Transformez vos photos anciennes en calendrier personnalisé :
+              une photo restaurée par mois, une légende souvenir et les dates
+              importantes de la famille.
+            </p>
+
+            <div className="grid sm:grid-cols-3 gap-3 mb-8">
+              {["12 mois personnalisés", "Photos restaurées", "Pack prêt à imprimer"].map((item) => (
+                <div
+                  key={item}
+                  className="rounded-2xl border border-gray-100 bg-white px-4 py-3 text-sm font-bold text-gray-700 shadow-sm"
+                >
+                  {item}
+                </div>
+              ))}
+            </div>
+
+            <Link
+              href="/album"
+              className="inline-block px-7 py-4 rounded-2xl bg-black text-white font-bold"
+            >
+              Créer mon calendrier
+            </Link>
+          </div>
+        </div>
+      </motion.section>
+
+      <motion.section
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-20"
+        initial={{ opacity: 0, y: 80 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.9 }}
+      >
         <div className="max-w-3xl mb-12">
           <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
             Témoignages
@@ -340,9 +401,9 @@ export default function Home() {
           </h2>
 
           <p className="text-xl text-gray-600">
-            1 crédit correspond à 1 photo restaurée. Le pack Découverte couvre
-            un calendrier portrait ou paysage, tandis que le pack Album famille
-            correspond au volume d’un album carré 24 pages.
+            1 crédit débloque 1 photo restaurée sans filigrane. Le pack
+            Découverte couvre un calendrier portrait ou paysage, tandis que le
+            pack Album famille correspond au volume d’un album carré 24 pages.
           </p>
         </div>
 
@@ -368,7 +429,7 @@ export default function Home() {
                 {plan.description}
               </p>
               <p className={plan.featured ? "font-bold mb-8" : "font-bold text-gray-900 mb-8"}>
-                {plan.credits} crédits · jusqu’à {plan.credits} photos restaurées
+                {plan.credits} crédits · jusqu’à {plan.credits} photos sans filigrane
               </p>
 
               <BuyCreditsButton

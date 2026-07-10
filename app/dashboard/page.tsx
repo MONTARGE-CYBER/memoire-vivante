@@ -66,7 +66,7 @@ export default function DashboardPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push("/login");
+        router.push(`/login?next=${encodeURIComponent("/dashboard")}`);
         return;
       }
 
@@ -149,7 +149,7 @@ export default function DashboardPage() {
       <section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
         <div className="max-w-3xl mb-12">
           <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
-            Tableau de bord
+            Compte utilisateur
           </span>
 
           <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6">
@@ -196,7 +196,7 @@ export default function DashboardPage() {
               Restaurer une photo
             </h2>
             <p className="text-white/80 text-lg">
-              Importez une photo ancienne et ajoutez-la à votre futur album souvenir.
+              Importez une photo ancienne, enregistrez-la dans votre galerie, puis utilisez-la dans vos albums et calendriers.
             </p>
           </Link>
 
@@ -247,7 +247,7 @@ export default function DashboardPage() {
 
           <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-sm border border-white/60">
             <p className="text-sm font-semibold text-gray-500 mb-3">
-              Packs
+              Crédits
             </p>
             <p className="text-3xl font-black text-purple-600">
               {loading ? "..." : stats?.credits}

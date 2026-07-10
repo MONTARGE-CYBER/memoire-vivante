@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Mémoire Vivante | Restauration photo IA",
   description:
     "Restaurez vos photos anciennes avec l’intelligence artificielle, retrouvez-les dans une galerie privée et préparez vos souvenirs familiaux à l’impression.",
+  icons: {
+    icon: "/brand/favicon-cropped.png",
+    shortcut: "/brand/favicon-cropped.png",
+    apple: "/brand/favicon-cropped.png",
+  },
 };
 
 export default function RootLayout({

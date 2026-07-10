@@ -13,7 +13,7 @@ export type CreditPack = {
 export const creditPacks: CreditPack[] = [
   {
     credits: 5,
-    description: "Pour tester le rendu ou créer un calendrier annuel simple.",
+    description: "Pour débloquer quelques photos ou créer un calendrier annuel simple.",
     id: "discovery",
     name: "Découverte",
     price: "5,90€",
@@ -22,7 +22,7 @@ export const creditPacks: CreditPack[] = [
   {
     credits: 25,
     description:
-      "Pour préparer un album carré de 24 pages avec une vraie sélection familiale.",
+      "Pour débloquer une sélection familiale et préparer un album carré de 24 pages.",
     featured: true,
     id: "family",
     name: "Album famille",
@@ -32,7 +32,7 @@ export const creditPacks: CreditPack[] = [
   {
     credits: 60,
     description:
-      "Pour restaurer une collection plus complète avant album, calendrier ou archive familiale.",
+      "Pour débloquer une collection plus complète avant album, calendrier ou archive familiale.",
     id: "memory",
     name: "Grande mémoire",
     price: "39,90€",

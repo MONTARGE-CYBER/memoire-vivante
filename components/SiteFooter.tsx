@@ -1,10 +1,11 @@
 import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 
 const quickLinks = [
   { label: "Restaurer une photo", href: "/upload" },
   { label: "Mes photos", href: "/gallery" },
   { label: "Créer un album", href: "/album" },
-  { label: "Tableau de bord", href: "/dashboard" },
+  { label: "Mon espace", href: "/dashboard" },
 ];
 
 const legalLinks = [
@@ -19,7 +20,7 @@ export default function SiteFooter() {
     <footer className="relative z-10 border-t border-white/40 bg-white/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 grid gap-10 md:grid-cols-[1.1fr_0.8fr_1fr]">
         <div>
-          <p className="text-2xl font-black mb-4">Mémoire Vivante</p>
+          <BrandLogo variant="vertical" className="mb-5" />
           <p className="text-gray-600 leading-relaxed">
             Restaurez vos photos anciennes et préparez un album souvenir à
             offrir à vos proches.
@@ -52,7 +53,7 @@ export default function SiteFooter() {
               disabled
               className="w-full rounded-2xl bg-black px-5 py-4 font-bold text-white opacity-60"
             >
-              Newsletter bientôt disponible
+              S’abonner à la newsletter
             </button>
           </form>
         </div>

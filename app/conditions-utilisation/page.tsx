@@ -4,7 +4,7 @@ export default function ConditionsUtilisationPage() {
   return (
     <LegalPage
       title="Conditions d'utilisation"
-      description="Ces conditions présentent les règles générales d’utilisation de Mémoire Vivante. Elles devront être finalisées avant l’ouverture commerciale."
+      description="Ces conditions présentent les règles générales d’utilisation de Mémoire Vivante."
       sections={[
         {
           title: "Objet du service",
@@ -16,7 +16,7 @@ export default function ConditionsUtilisationPage() {
         },
         {
           title: "Évolutions du service",
-          text: "Certaines fonctionnalités, comme les exports imprimables ou les téléchargements sans filigrane via crédits, peuvent évoluer au fil du développement.",
+          text: "Les restaurations, crédits, exports imprimables et albums peuvent évoluer afin d’améliorer la qualité du service et l’expérience d’impression.",
         },
       ]}
     />

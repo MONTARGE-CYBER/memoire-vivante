@@ -2,15 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
 import WatermarkedImage from "@/components/WatermarkedImage";
-import { downloadRestoration } from "@/lib/downloadRestoration";
 import { supabase } from "@/lib/supabase";
 
 const guidance = [
   "Choisissez une photo nette, même abîmée ou jaunie.",
-  "Évitez les captures d’écran trop petites si possible.",
+  "Prenez la photo bien à plat, avec une lumière douce et sans reflet.",
   "La restauration peut prendre quelques instants.",
 ];
 
@@ -42,18 +42,16 @@ const demoSamples = [
   },
   {
     title: "Souvenir familial",
-    before:
-      "https://replicate.delivery/mgxm/b033ff07-1d2e-4768-a137-6c16b5ed4bed/d_1.png",
-    after:
-      "https://replicate.delivery/xezq/VjZzUS8uxOobNpyJzFebvWiuUa3Bzs60RQOexLVQIOuewckpA/tmpio8e0bce.png",
+    before: "/examples/family-phone-before.png",
+    after: "/examples/family-phone-after.png",
   },
 ];
 
 export default function UploadPage() {
+  const router = useRouter();
   const [preview, setPreview] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [restoredImage, setRestoredImage] = useState<string | null>(null);
-  const [restorationId, setRestorationId] = useState<number | null>(null);
   const [demoTitle, setDemoTitle] = useState<string | null>(null);
   const [isWatermarkedPreview, setIsWatermarkedPreview] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -77,7 +75,6 @@ export default function UploadPage() {
 
     setFile(selectedFile);
     setRestoredImage(null);
-    setRestorationId(null);
     setDemoTitle(null);
     setIsWatermarkedPreview(false);
 
@@ -89,7 +86,6 @@ export default function UploadPage() {
     setPreview(sample.before);
     setRestoredImage(sample.after);
     setFile(null);
-    setRestorationId(null);
     setDemoTitle(sample.title);
     setIsWatermarkedPreview(true);
   };
@@ -105,7 +101,7 @@ export default function UploadPage() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        alert("Veuillez vous connecter avant de restaurer une photo.");
+        router.push(`/login?next=${encodeURIComponent("/upload")}`);
         setLoading(false);
         return;
       }
@@ -151,7 +147,6 @@ export default function UploadPage() {
       }
 
       setRestoredImage(result.imageUrl);
-      setRestorationId(result.restorationId);
       setIsWatermarkedPreview(true);
     } catch (err) {
       console.error(err);
@@ -179,7 +174,7 @@ export default function UploadPage() {
             <p className="text-xl text-gray-600 mb-8 leading-relaxed">
               Testez gratuitement avec un exemple ou importez une photo de
               famille. Le rendu gratuit est filigrané ; la version sans
-              filigrane sera débloquée avec les crédits.
+              filigrane se débloque avec les crédits.
             </p>
 
             <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
@@ -284,10 +279,18 @@ export default function UploadPage() {
               </div>
 
               <p className="text-2xl font-black">
-                Ou télécharger votre propre photo
+                Importer votre photo
+              </p>
+
+              <p className="mt-4 text-lg font-black text-gray-900">
+                Utilisez votre appareil photo
               </p>
 
               <p className="text-gray-500 mt-3">
+                Prenez simplement une photo de votre ancienne photo - pas besoin de scanner !
+              </p>
+
+              <p className="text-gray-500 mt-2">
                 JPG, PNG, TIFF ou WebP - 10 Mo maximum - aperçu gratuit avec filigrane
               </p>
             </label>
@@ -385,7 +388,7 @@ export default function UploadPage() {
                       disabled={loading}
                       className="w-full px-8 py-5 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-2xl font-black text-lg shadow-lg disabled:opacity-60"
                     >
-                      {loading ? "Restauration en cours..." : "Restaurer et ajouter à mon album"}
+                      {loading ? "Restauration en cours..." : "Restaurer et enregistrer dans ma galerie"}
                     </button>
                   )}
 
@@ -415,37 +418,32 @@ export default function UploadPage() {
                   {restoredImage && !demoTitle && (
                     <>
                       <div className="grid sm:grid-cols-3 gap-3">
-                      <Link
-                        href="/album"
-                        className="text-center px-5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold"
-                      >
-                        Ajouter à mon album
-                      </Link>
+                        <Link
+                          href="/gallery"
+                          className="text-center px-5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold"
+                        >
+                          Débloquer sans filigrane
+                        </Link>
 
-                      <Link
-                        href="/gallery"
-                        className="text-center px-5 py-4 rounded-2xl bg-black text-white font-bold"
-                      >
-                        Voir la galerie
-                      </Link>
+                        <Link
+                          href="/gallery"
+                          className="text-center px-5 py-4 rounded-2xl bg-black text-white font-bold"
+                        >
+                          Voir la galerie
+                        </Link>
 
-                      <button
-                        onClick={() => {
-                          if (restorationId) {
-                            downloadRestoration(restorationId);
-                          }
-                        }}
-                        disabled={!restorationId || isWatermarkedPreview}
-                        className="text-center px-5 py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold disabled:opacity-60"
-                      >
-                        Sans filigrane avec crédits
-                      </button>
-                    </div>
+                        <Link
+                          href="/album"
+                          className="text-center px-5 py-4 rounded-2xl bg-purple-100 text-purple-700 font-bold"
+                        >
+                          Composer mon album
+                        </Link>
+                      </div>
 
                       {isWatermarkedPreview && (
                         <p className="mt-4 text-center text-sm font-semibold text-gray-500">
-                          La version gratuite reste filigranée. Les packs de crédits
-                          permettront de débloquer le téléchargement sans filigrane.
+                          La restauration est enregistrée dans votre galerie. Vous pourrez
+                          la débloquer sans filigrane avec 1 crédit depuis Mes photos.
                         </p>
                       )}
                     </>

@@ -57,7 +57,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error: "download locked",
-          message: "Le téléchargement sans filigrane sera débloqué avec les crédits.",
+          message: "Débloquez cette photo avec 1 crédit pour la télécharger sans filigrane.",
         },
         { status: 402 }
       );
