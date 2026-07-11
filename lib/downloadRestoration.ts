@@ -25,12 +25,13 @@ export async function downloadRestoration(id: number) {
     });
 
     if (!response.ok) {
-      if (response.status === 402) {
-        alert("Débloquez cette photo avec 1 crédit pour la télécharger sans filigrane.");
-        return;
-      }
+      const result = await response.json().catch(() => null);
 
-      alert("Erreur lors du téléchargement.");
+      alert(
+        result?.message ||
+          result?.error ||
+          "Impossible de télécharger cette photo pour le moment."
+      );
       return;
     }
 
@@ -46,6 +47,6 @@ export async function downloadRestoration(id: number) {
     URL.revokeObjectURL(url);
   } catch (error) {
     console.error(error);
-    alert("Erreur lors du téléchargement. Vérifiez votre connexion puis réessayez.");
+    alert("Impossible de télécharger cette photo. Vérifiez votre connexion puis réessayez.");
   }
 }

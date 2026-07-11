@@ -4,7 +4,7 @@ export default function PolitiqueCookiesPage() {
   return (
     <LegalPage
       title="Politique relative aux cookies"
-      description="Cette page présente l’usage prévu des cookies et traceurs. Elle devra être ajustée selon les outils réellement activés sur le site."
+      description="Cette page présente l’usage des cookies et mécanismes de stockage utilisés par Mémoire Vivante."
       sections={[
         {
           title: "Cookies nécessaires",
@@ -12,11 +12,11 @@ export default function PolitiqueCookiesPage() {
         },
         {
           title: "Mesure d’audience",
-          text: "Si un outil de mesure d’audience est ajouté, ses finalités et ses paramètres de consentement seront détaillés ici.",
+          text: "Si une mesure d’audience est utilisée, elle sert à comprendre l’utilisation générale du service et à améliorer l’expérience utilisateur.",
         },
         {
           title: "Gestion du consentement",
-          text: "Un mécanisme de gestion du consentement pourra être ajouté avant la mise en production si des cookies non essentiels sont utilisés.",
+          text: "Lorsque des cookies non essentiels sont utilisés, un mécanisme de consentement permet à l’utilisateur de gérer ses préférences.",
         },
       ]}
     />

@@ -43,7 +43,7 @@ export default function BuyCreditsButton({
 
       if (!response.ok || !result.url) {
         setLoading(false);
-        alert(result.error || "Impossible d’ouvrir le paiement.");
+        alert(result.error || "Impossible d’ouvrir le paiement pour le moment.");
         return;
       }
 

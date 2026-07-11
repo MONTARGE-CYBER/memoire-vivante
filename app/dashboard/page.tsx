@@ -181,6 +181,14 @@ export default function DashboardPage() {
                 ? "Vos crédits ont été ajoutés à votre solde."
                 : "Aucun crédit n’a été ajouté. Vous pouvez relancer un achat quand vous le souhaitez."}
             </p>
+            {checkoutStatus === "success" && (
+              <Link
+                href="/gallery?filter=watermarked"
+                className="mt-4 inline-flex rounded-xl bg-green-700 px-5 py-3 text-sm font-black text-white transition hover:-translate-y-0.5"
+              >
+                Débloquer mes photos
+              </Link>
+            )}
           </div>
         )}
 
@@ -256,10 +264,10 @@ export default function DashboardPage() {
               crédit(s) disponible(s) pour débloquer des photos sans filigrane.
             </p>
             <Link
-              href="/#tarifs"
+              href={stats && stats.credits > 0 ? "/gallery?filter=watermarked" : "/#tarifs"}
               className="mt-5 inline-flex rounded-xl bg-purple-600 px-5 py-3 text-sm font-bold text-white transition hover:-translate-y-0.5"
             >
-              Voir les packs
+              {stats && stats.credits > 0 ? "Débloquer mes photos" : "Voir les packs"}
             </Link>
           </div>
 

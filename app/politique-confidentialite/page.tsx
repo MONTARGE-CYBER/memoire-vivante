@@ -4,7 +4,7 @@ export default function PolitiqueConfidentialitePage() {
   return (
     <LegalPage
       title="Politique de confidentialité"
-      description="Cette politique explique les grands principes de traitement des données. Elle devra être relue et complétée avant le lancement public."
+      description="Cette politique explique les grands principes de traitement des données sur Mémoire Vivante."
       sections={[
         {
           title: "Données collectées",
@@ -16,7 +16,7 @@ export default function PolitiqueConfidentialitePage() {
         },
         {
           title: "Suppression",
-          text: "L’utilisateur peut supprimer ses restaurations depuis sa galerie. Les modalités complètes de suppression et de conservation seront précisées avant mise en production.",
+          text: "L’utilisateur peut supprimer ses restaurations depuis sa galerie. Certaines données techniques peuvent être conservées temporairement lorsque cela est nécessaire au fonctionnement, à la sécurité ou aux obligations légales du service.",
         },
       ]}
     />

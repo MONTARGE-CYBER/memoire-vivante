@@ -117,10 +117,11 @@ html {
   }
 
   .pdf-page-poster-portrait > * {
-    zoom: 0.9;
+    zoom: 0.94;
   }
 
   .pdf-page-poster-portrait {
+    align-items: center;
     page: calendar-poster-portrait;
   }
 
@@ -129,7 +130,44 @@ html {
   }
 
   .pdf-page-poster-landscape {
+    align-items: center;
     page: calendar-poster-landscape;
+  }
+
+  .pdf-page-calendar-month {
+    align-items: center;
+  }
+
+  .pdf-page-calendar-month > .pdf-calendar-month {
+    max-height: 255mm !important;
+    max-width: 170mm !important;
+    overflow: hidden !important;
+  }
+
+  .pdf-page-calendar-month > .pdf-calendar-month img {
+    max-height: 62mm !important;
+  }
+
+  .pdf-page-calendar-month > .pdf-calendar-month > .relative.overflow-hidden,
+  .pdf-page-calendar-month > .pdf-calendar-month > img {
+    height: 62mm !important;
+    max-height: 62mm !important;
+  }
+
+  .pdf-page-poster-portrait .pdf-calendar-poster > * {
+    height: auto !important;
+    max-height: none !important;
+    max-width: 185mm !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .pdf-page-poster-landscape .pdf-calendar-poster > * {
+    height: 175mm !important;
+    max-height: 185mm !important;
+    max-width: 270mm !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
   }
 
   .pdf-page-album-portrait,

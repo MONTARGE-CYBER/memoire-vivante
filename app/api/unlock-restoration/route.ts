@@ -35,7 +35,7 @@ export async function POST(req: Request) {
     const token = getBearerToken(req);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Connectez-vous pour débloquer cette photo." }, { status: 401 });
     }
 
     const {
@@ -44,13 +44,13 @@ export async function POST(req: Request) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Connectez-vous pour débloquer cette photo." }, { status: 401 });
     }
 
     const { id } = await req.json();
 
     if (typeof id !== "number") {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return NextResponse.json({ error: "Photo invalide." }, { status: 400 });
     }
 
     const { data, error } = await supabaseAdmin.rpc(

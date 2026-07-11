@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const token = getBearerToken(req);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Vous devez être connecté pour télécharger cette photo." }, { status: 401 });
     }
 
     const {
@@ -30,13 +30,13 @@ export async function POST(req: Request) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Vous devez être connecté pour télécharger cette photo." }, { status: 401 });
     }
 
     const { id } = await req.json();
 
     if (typeof id !== "number") {
-      return NextResponse.json({ error: "Invalid id" }, { status: 400 });
+      return NextResponse.json({ error: "Photo invalide." }, { status: 400 });
     }
 
     const { data: restoration, error } = await supabaseAdmin
@@ -46,11 +46,11 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !restoration) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Photo introuvable." }, { status: 404 });
     }
 
     if (restoration.user_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Cette photo n’appartient pas à votre compte." }, { status: 403 });
     }
 
     if (!restoration.unlocked_at) {
@@ -67,7 +67,7 @@ export async function POST(req: Request) {
 
     if (!imageResponse.ok) {
       return NextResponse.json(
-        { error: "Restored image unavailable" },
+        { error: "La photo restaurée est temporairement indisponible." },
         { status: 502 }
       );
     }
@@ -85,7 +85,7 @@ export async function POST(req: Request) {
     console.error("DOWNLOAD ERROR:", error);
 
     return NextResponse.json(
-      { error: "Download failed" },
+      { error: "Impossible de télécharger cette photo pour le moment." },
       { status: 500 }
     );
   }

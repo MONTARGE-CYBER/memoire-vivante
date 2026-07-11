@@ -118,7 +118,7 @@ export default function UploadPage() {
 
       if (uploadError) {
         console.error(uploadError);
-        alert("Erreur lors de l'upload de la photo.");
+        alert("Impossible d’importer cette photo. Vérifiez le fichier puis réessayez.");
         setLoading(false);
         return;
       }
@@ -139,9 +139,9 @@ export default function UploadPage() {
 
       const result = await response.json();
 
-      if (!result.success) {
+      if (!response.ok || !result.success) {
         console.error(result);
-        alert("Erreur lors de la restauration IA.");
+        alert(result.error || "Impossible de restaurer cette photo pour le moment. Réessayez dans quelques instants.");
         setLoading(false);
         return;
       }
@@ -150,7 +150,7 @@ export default function UploadPage() {
       setIsWatermarkedPreview(true);
     } catch (err) {
       console.error(err);
-      alert("Erreur lors du traitement.");
+      alert("Impossible de traiter la photo. Vérifiez votre connexion puis réessayez.");
     } finally {
       setLoading(false);
     }
@@ -176,6 +176,13 @@ export default function UploadPage() {
               famille. Le rendu gratuit est filigrané ; la version sans
               filigrane se débloque avec les crédits.
             </p>
+
+            <a
+              href="#zone-restauration"
+              className="mb-6 inline-flex w-full justify-center rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 px-6 py-4 text-center font-black text-white shadow-lg transition hover:-translate-y-0.5 sm:w-auto lg:hidden"
+            >
+              Importer ou tester une photo
+            </a>
 
             <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
               <h2 className="text-xl font-bold mb-5">
@@ -226,7 +233,7 @@ export default function UploadPage() {
 
           </aside>
 
-          <div className="space-y-8">
+          <div id="zone-restauration" className="scroll-mt-32 space-y-8">
             <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-5 sm:p-6 shadow-sm border border-white/60">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-5">
                 <div>
@@ -419,7 +426,7 @@ export default function UploadPage() {
                     <>
                       <div className="grid sm:grid-cols-3 gap-3">
                         <Link
-                          href="/gallery"
+                          href="/gallery?filter=watermarked"
                           className="text-center px-5 py-4 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold"
                         >
                           Débloquer sans filigrane

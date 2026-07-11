@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import SiteFooter from "@/components/SiteFooter";
 
 export default function LoginPage() {
@@ -78,7 +78,7 @@ function LoginContent() {
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      alert(getAuthErrorMessage(error.message, "Impossible de créer le compte pour le moment."));
       return;
     }
 
@@ -99,7 +99,7 @@ function LoginContent() {
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      alert(getAuthErrorMessage(error.message, "Email ou mot de passe incorrect."));
       return;
     }
 
@@ -121,7 +121,12 @@ function LoginContent() {
     setResetLoading(false);
 
     if (error) {
-      alert(error.message);
+      alert(
+        getAuthErrorMessage(
+          error.message,
+          "Impossible d’envoyer le lien de réinitialisation pour le moment."
+        )
+      );
       return;
     }
 
@@ -148,7 +153,12 @@ function LoginContent() {
     setResetLoading(false);
 
     if (error) {
-      alert(error.message);
+      alert(
+        getAuthErrorMessage(
+          error.message,
+          "Impossible de mettre à jour le mot de passe pour le moment."
+        )
+      );
       return;
     }
 
@@ -160,9 +170,7 @@ function LoginContent() {
     <main className="min-h-screen bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6]">
       <section className="flex min-h-screen items-center justify-center p-6">
         <div className="w-full max-w-md bg-white/80 backdrop-blur-xl rounded-[2rem] p-8 shadow-2xl border border-white/60">
-          <Link href="/" className="text-2xl font-black block mb-8">
-            Mémoire Vivante
-          </Link>
+          <BrandLogo href="/" className="mb-8" />
 
           {recoveryMode ? (
             <>
@@ -277,12 +285,41 @@ function LoginContent() {
   );
 }
 
+function getAuthErrorMessage(message: string | undefined, fallback: string) {
+  const normalized = (message || "").toLowerCase();
+
+  if (normalized.includes("invalid login credentials")) {
+    return "Email ou mot de passe incorrect.";
+  }
+
+  if (normalized.includes("email not confirmed")) {
+    return "Veuillez confirmer votre adresse e-mail avant de vous connecter.";
+  }
+
+  if (
+    normalized.includes("user already registered") ||
+    normalized.includes("already registered")
+  ) {
+    return "Un compte existe déjà avec cette adresse e-mail.";
+  }
+
+  if (normalized.includes("password")) {
+    return "Le mot de passe ne respecte pas les règles de sécurité.";
+  }
+
+  if (normalized.includes("rate limit") || normalized.includes("too many")) {
+    return "Trop de tentatives. Réessayez dans quelques minutes.";
+  }
+
+  return fallback;
+}
+
 function LoginShell() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6]">
       <section className="flex min-h-screen items-center justify-center p-6">
         <div className="w-full max-w-md rounded-[2rem] border border-white/60 bg-white/80 p-8 shadow-2xl backdrop-blur-xl">
-          <p className="mb-8 block text-2xl font-black">Mémoire Vivante</p>
+          <BrandLogo href="/" className="mb-8" />
           <h1 className="mb-3 text-4xl font-black">Connexion</h1>
           <p className="text-gray-600">Chargement...</p>
         </div>

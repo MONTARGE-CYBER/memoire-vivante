@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     const token = authHeader?.replace("Bearer ", "");
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Vous devez être connecté pour supprimer cette photo." }, { status: 401 });
     }
 
     const {
@@ -30,10 +30,14 @@ export async function POST(req: Request) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Vous devez être connecté pour supprimer cette photo." }, { status: 401 });
     }
 
     const { id } = await req.json();
+
+    if (typeof id !== "number") {
+      return NextResponse.json({ error: "Photo invalide." }, { status: 400 });
+    }
 
     const { data: restoration, error } = await supabaseAdmin
       .from("restorations")
@@ -42,11 +46,11 @@ export async function POST(req: Request) {
       .single();
 
     if (error || !restoration) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json({ error: "Photo introuvable." }, { status: 404 });
     }
 
     if (restoration.user_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Cette photo n’appartient pas à votre compte." }, { status: 403 });
     }
 
     const filesToDelete = [
@@ -66,6 +70,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Delete failed" }, { status: 500 });
+    return NextResponse.json({ error: "Impossible de supprimer cette photo pour le moment." }, { status: 500 });
   }
 }

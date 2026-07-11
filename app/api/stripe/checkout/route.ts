@@ -43,7 +43,7 @@ export async function POST(req: Request) {
     const token = getBearerToken(req);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Connectez-vous pour acheter des crédits." }, { status: 401 });
     }
 
     const {
@@ -52,14 +52,14 @@ export async function POST(req: Request) {
     } = await supabaseAdmin.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Connectez-vous pour acheter des crédits." }, { status: 401 });
     }
 
     const { packId } = await req.json();
     const pack = typeof packId === "string" ? getCreditPack(packId) : null;
 
     if (!pack) {
-      return NextResponse.json({ error: "Pack invalide" }, { status: 400 });
+      return NextResponse.json({ error: "Ce pack de crédits n’est pas disponible." }, { status: 400 });
     }
 
     const baseUrl = getBaseUrl(req);
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     console.error("STRIPE CHECKOUT ERROR:", error);
 
     return NextResponse.json(
-      { error: "Impossible de créer le paiement." },
+      { error: "Impossible d’ouvrir le paiement pour le moment." },
       { status: 500 }
     );
   }

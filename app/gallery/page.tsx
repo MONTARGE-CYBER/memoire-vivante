@@ -26,6 +26,18 @@ const galleryFilters: { id: GalleryFilter; label: string }[] = [
   { id: "watermarked", label: "Filigranées" },
 ];
 
+function getGalleryFilterFromUrl() {
+  if (typeof window === "undefined") return "all";
+
+  const filter = new URLSearchParams(window.location.search).get("filter");
+
+  if (filter === "unlocked" || filter === "watermarked") {
+    return filter;
+  }
+
+  return "all";
+}
+
 export default function GalleryPage() {
   const router = useRouter();
   const [items, setItems] = useState<Restoration[]>([]);
@@ -43,6 +55,10 @@ export default function GalleryPage() {
   const availableCredits = credits ?? 0;
 
   useEffect(() => {
+    const filterTimeoutId = window.setTimeout(() => {
+      setFilter(getGalleryFilterFromUrl());
+    }, 0);
+
     async function loadGallery() {
       const {
         data: { user },
@@ -50,7 +66,8 @@ export default function GalleryPage() {
 
       if (!user) {
         setLoading(false);
-        router.push(`/login?next=${encodeURIComponent("/gallery")}`);
+        const nextPath = `${window.location.pathname}${window.location.search}`;
+        router.push(`/login?next=${encodeURIComponent(nextPath)}`);
         return;
       }
 
@@ -80,7 +97,23 @@ export default function GalleryPage() {
     }
 
     loadGallery();
+
+    return () => window.clearTimeout(filterTimeoutId);
   }, [router]);
+
+  function changeFilter(nextFilter: GalleryFilter) {
+    setFilter(nextFilter);
+
+    const url = new URL(window.location.href);
+
+    if (nextFilter === "all") {
+      url.searchParams.delete("filter");
+    } else {
+      url.searchParams.set("filter", nextFilter);
+    }
+
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }
 
   async function deleteRestoration(id: number) {
     const {
@@ -88,7 +121,7 @@ export default function GalleryPage() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      alert("Vous devez être connecté.");
+      alert("Connectez-vous pour supprimer cette photo.");
       return;
     }
 
@@ -112,14 +145,14 @@ export default function GalleryPage() {
 
       if (!result.success) {
         console.error(result);
-        alert("Erreur lors de la suppression.");
+        alert(result.error || "Impossible de supprimer cette photo pour le moment.");
         return;
       }
 
       setItems((prev) => prev.filter((item) => item.id !== id));
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de la suppression.");
+      alert("Impossible de supprimer cette photo. Vérifiez votre connexion puis réessayez.");
     }
   }
 
@@ -129,7 +162,7 @@ export default function GalleryPage() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      alert("Vous devez être connecté.");
+      alert("Connectez-vous pour débloquer cette photo.");
       return;
     }
 
@@ -256,7 +289,7 @@ export default function GalleryPage() {
               <button
                 key={option.id}
                 type="button"
-                onClick={() => setFilter(option.id)}
+                onClick={() => changeFilter(option.id)}
                 className={`rounded-2xl px-5 py-3 text-sm font-black transition ${
                   filter === option.id
                     ? "bg-black text-white shadow-lg"

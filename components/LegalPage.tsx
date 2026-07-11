@@ -1,4 +1,4 @@
-import Link from "next/link";
+import BrandLogo from "@/components/BrandLogo";
 import SiteFooter from "@/components/SiteFooter";
 
 type LegalPageProps = {
@@ -18,9 +18,7 @@ export default function LegalPage({
   return (
     <main className="min-h-screen bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
       <section className="max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
-        <Link href="/" className="inline-block text-2xl font-black mb-12">
-          Mémoire Vivante
-        </Link>
+        <BrandLogo href="/" className="mb-12" />
 
         <span className="inline-block px-4 py-2 rounded-full bg-purple-100 text-purple-700 font-semibold mb-6">
           Informations légales

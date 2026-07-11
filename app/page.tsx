@@ -110,7 +110,10 @@ function CalendarHomePreview() {
 
 export default function Home() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
+    <main
+      id="top"
+      className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black"
+    >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 left-[-10%] w-[700px] h-[700px] bg-purple-300/20 rounded-full blur-3xl" />
         <div className="absolute top-[30%] right-[-10%] w-[600px] h-[600px] bg-pink-300/20 rounded-full blur-3xl" />

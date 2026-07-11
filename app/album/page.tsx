@@ -649,7 +649,7 @@ export default function AlbumPage() {
     if (error) {
       console.error(error);
       setSaveError(
-        "Impossible de sauvegarder. Vérifiez que le script Supabase rls-albums.sql a bien été exécuté."
+        "Impossible de sauvegarder cet album pour le moment. Réessayez dans quelques instants."
       );
     } else {
       setSavedAlbumId(data.id);
@@ -792,7 +792,7 @@ export default function AlbumPage() {
       if (albumError) {
         console.warn(albumError);
         setSaveError(
-          "La sauvegarde des albums n’est pas encore active. Exécutez le script Supabase rls-albums.sql."
+          "Impossible de recharger votre album sauvegardé pour le moment."
         );
       } else if (savedAlbum) {
         setSavedAlbumId(savedAlbum.id);
@@ -2844,11 +2844,11 @@ export default function AlbumPage() {
           <div className="mx-auto grid justify-items-center gap-8">
             {calendarProduct === "monthly" ? (
               calendarMonths.map((month, monthIndex) => (
-                <div key={`pdf-month-${monthNames[monthIndex]}`} className="pdf-page">
+                <div key={`pdf-month-${monthNames[monthIndex]}`} className="pdf-page pdf-page-calendar-month">
                   {renderCalendarMonthPreview(
                     month,
                     monthIndex,
-                    "mx-auto w-[420px] max-w-none shrink-0"
+                    "pdf-calendar-month mx-auto w-[420px] max-w-none shrink-0"
                   )}
                 </div>
               ))
@@ -2860,7 +2860,11 @@ export default function AlbumPage() {
                     : "pdf-page-poster-portrait"
                 }`}
               >
-                {renderCalendarPosterPreview()}
+                <div className="pdf-calendar-poster">
+                  {renderCalendarPosterPreview(
+                    calendarProduct === "posterPortrait" ? "screen" : "export"
+                  )}
+                </div>
               </div>
             )}
           </div>

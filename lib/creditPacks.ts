@@ -13,7 +13,7 @@ export type CreditPack = {
 export const creditPacks: CreditPack[] = [
   {
     credits: 5,
-    description: "Pour débloquer quelques photos ou créer un calendrier annuel simple.",
+    description: "Pour débloquer quelques photos ou créer un calendrier annuel 3 photos.",
     id: "discovery",
     name: "Découverte",
     price: "5,90€",

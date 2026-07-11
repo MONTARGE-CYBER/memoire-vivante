@@ -38,7 +38,7 @@ export default function AuthNavActions() {
     return (
       <Link
         href="/login"
-        className="px-5 py-3 rounded-2xl bg-black text-white font-semibold"
+        className="rounded-2xl bg-black px-4 py-2.5 text-sm font-semibold text-white sm:px-5 sm:py-3 sm:text-base"
       >
         Connexion
       </Link>
@@ -53,7 +53,7 @@ export default function AuthNavActions() {
 
       <button
         onClick={signOut}
-        className="px-5 py-3 rounded-2xl bg-black text-white font-semibold"
+        className="rounded-2xl bg-black px-4 py-2.5 text-sm font-semibold text-white sm:px-5 sm:py-3 sm:text-base"
       >
         Déconnexion
       </button>

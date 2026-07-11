@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const token = getBearerToken(req);
 
     if (!token) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Connectez-vous pour restaurer cette photo." }, { status: 401 });
     }
 
     const {
@@ -36,14 +36,14 @@ export async function POST(req: Request) {
     } = await supabase.auth.getUser(token);
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Connectez-vous pour restaurer cette photo." }, { status: 401 });
     }
 
     const { imageUrl } = await req.json();
 
     if (typeof imageUrl !== "string" || imageUrl.length === 0) {
       return NextResponse.json(
-        { success: false, error: "Image URL invalide" },
+        { success: false, error: "Image invalide." },
         { status: 400 }
       );
     }
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
 
     if (!imageUrl.startsWith(expectedStoragePrefix)) {
       return NextResponse.json(
-        { success: false, error: "Image non autorisée" },
+        { success: false, error: "Cette image n’appartient pas à votre compte." },
         { status: 403 }
       );
     }
@@ -70,6 +70,17 @@ export async function POST(req: Request) {
 
     // Télécharger l’image depuis Replicate
     const imageResponse = await fetch(replicateUrl);
+
+    if (!imageResponse.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "La restauration n’a pas pu être récupérée. Réessayez dans quelques instants.",
+        },
+        { status: 502 }
+      );
+    }
+
     const imageBuffer = await imageResponse.arrayBuffer();
 
     // Nom fichier
@@ -85,10 +96,13 @@ export async function POST(req: Request) {
     if (uploadError) {
       console.error(uploadError);
 
-      return NextResponse.json({
-        success: false,
-        error: uploadError.message,
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Impossible d’enregistrer la photo restaurée. Réessayez dans quelques instants.",
+        },
+        { status: 500 }
+      );
     }
 
     // URL publique permanente
@@ -109,10 +123,13 @@ export async function POST(req: Request) {
     if (insertError) {
       console.error(insertError);
 
-      return NextResponse.json({
-        success: false,
-        error: insertError.message,
-      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Impossible d’ajouter la photo à votre galerie. Réessayez dans quelques instants.",
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -124,9 +141,12 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error(error);
 
-    return NextResponse.json({
-      success: false,
-      error: "Erreur restauration",
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Impossible de restaurer cette photo pour le moment. Réessayez dans quelques instants.",
+      },
+      { status: 500 }
+    );
   }
 }
