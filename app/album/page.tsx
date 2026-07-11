@@ -1240,6 +1240,7 @@ export default function AlbumPage() {
   function renderCalendarPosterPreview(displayMode: "screen" | "export" = "export") {
     const isPortrait = calendarProduct === "posterPortrait";
     const isScreenPreview = displayMode === "screen";
+    const isLandscapeExport = !isPortrait && !isScreenPreview;
     const posterPhotos = calendarPosterPhotos.slice(0, 3);
     const posterSlots = [posterPhotos[0], posterPhotos[1], posterPhotos[2]];
     const posterSizeClass = isPortrait
@@ -1285,12 +1286,20 @@ export default function AlbumPage() {
           ? "px-2.5 py-1 text-[10px] tracking-[0.12em]"
           : "px-3 py-1.5 text-xs tracking-[0.14em]",
     };
+    const posterInnerStyle = isLandscapeExport
+      ? {
+          height: `${100 / 0.86}%`,
+          transform: "scale(0.86)",
+          transformOrigin: "top left",
+          width: `${100 / 0.86}%`,
+        }
+      : undefined;
 
     return (
       <div
-        className={`mx-auto rounded-[1.5rem] border ${selectedCalendarTheme.borderClass} ${selectedCalendarTheme.pageClass} ${posterSizeClass} ${posterPaddingClass} shadow-lg`}
+        className={`mx-auto rounded-[1.5rem] border ${selectedCalendarTheme.borderClass} ${selectedCalendarTheme.pageClass} ${posterSizeClass} ${posterPaddingClass} ${isLandscapeExport ? "overflow-hidden" : ""} shadow-lg`}
       >
-        <div className={`flex min-h-full flex-col ${posterGapClass}`}>
+        <div className={`flex min-h-full flex-col ${posterGapClass}`} style={posterInnerStyle}>
           <div>
             <p className={`text-xs font-black uppercase tracking-[0.2em] ${selectedCalendarTheme.accentClass}`}>
               Calendrier familial
