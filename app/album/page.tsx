@@ -299,11 +299,10 @@ function getPageGridClass(photosPerPage: number) {
 }
 
 function getPageImageClass(photosPerPage: number, index: number) {
-  if (photosPerPage === 1) return "h-80 w-full rounded-xl";
-  if (photosPerPage === 2) return "h-64 w-full rounded-xl";
-  if (photosPerPage === 3 && index === 0) return "col-span-2 h-56 w-full rounded-xl";
-  if (photosPerPage === 3) return "h-40 w-full rounded-xl";
-  return "h-40 w-full rounded-xl";
+  if (photosPerPage === 1) return "aspect-square w-full rounded-xl";
+  if (photosPerPage === 2) return "aspect-[2/1] w-full rounded-xl";
+  if (photosPerPage === 3 && index === 0) return "col-span-2 aspect-[2/1] w-full rounded-xl";
+  return "aspect-square w-full rounded-xl";
 }
 
 function getPhotoStyleClass(pageStyle: string) {
