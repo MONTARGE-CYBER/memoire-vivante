@@ -1248,14 +1248,14 @@ export default function AlbumPage() {
         : "min-h-[930px] max-w-[620px]"
       : isScreenPreview
         ? "min-h-[560px] w-[760px] max-w-none"
-        : "h-[620px] w-[900px] max-w-none";
+        : "h-[600px] w-[900px] max-w-none";
     const photoAreaClass = isPortrait
       ? isScreenPreview
         ? "h-[250px]"
         : "h-[360px]"
       : isScreenPreview
         ? "h-[145px]"
-        : "h-[230px]";
+        : "h-[185px]";
     const monthGridClass = isPortrait ? "grid-cols-3" : "grid-cols-6";
     const posterPaddingClass = isPortrait
       ? isScreenPreview
@@ -1263,14 +1263,14 @@ export default function AlbumPage() {
         : "p-5"
       : isScreenPreview
         ? "p-3"
-        : "p-4";
+        : "p-3";
     const posterGapClass = isPortrait
       ? isScreenPreview
         ? "gap-3"
         : "gap-4"
       : isScreenPreview
         ? "gap-2"
-        : "gap-3";
+        : "gap-2";
     const posterImageProps = {
       badgeClassName: isPortrait
         ? isScreenPreview
@@ -1390,7 +1390,7 @@ export default function AlbumPage() {
             </p>
           </div>
 
-          <div className={`rounded-2xl bg-white/70 ${isPortrait ? (isScreenPreview ? "p-2" : "p-3") : "p-2"}`}>
+          <div className={`rounded-2xl bg-white/70 ${isPortrait ? (isScreenPreview ? "p-2" : "p-3") : isScreenPreview ? "p-2" : "p-1.5"}`}>
             <div className={`grid ${isScreenPreview ? "gap-1.5" : "gap-2"} ${monthGridClass}`}>
               {monthNames.map((monthName, monthIndex) => (
                 <div key={`poster-full-month-${monthName}`}>
@@ -1400,11 +1400,11 @@ export default function AlbumPage() {
             </div>
           </div>
 
-          <div className={`mt-auto rounded-2xl bg-white/75 ${isPortrait ? (isScreenPreview ? "p-3" : "p-4") : "p-3"}`}>
-            <h4 className={`${isPortrait ? (isScreenPreview ? "text-base" : "text-xl") : "text-base"} font-black text-gray-950`}>
+          <div className={`mt-auto rounded-2xl bg-white/75 ${isPortrait ? (isScreenPreview ? "p-3" : "p-4") : isScreenPreview ? "p-3" : "p-2.5"}`}>
+            <h4 className={`${isPortrait ? (isScreenPreview ? "text-base" : "text-xl") : isScreenPreview ? "text-base" : "text-sm"} font-black text-gray-950`}>
               {title || "Notre calendrier souvenir"}
             </h4>
-            <p className={`${isPortrait && !isScreenPreview ? "mt-3" : "mt-1"} text-xs font-semibold leading-relaxed text-gray-500`}>
+            <p className={`${isPortrait && !isScreenPreview ? "mt-3" : "mt-1"} ${!isPortrait && !isScreenPreview ? "text-[10px]" : "text-xs"} font-semibold leading-relaxed text-gray-500`}>
               {calendarPosterDates || "Dates importantes à ajouter."}
             </p>
           </div>
