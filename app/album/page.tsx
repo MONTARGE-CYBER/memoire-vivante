@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toPng } from "html-to-image";
@@ -20,11 +20,14 @@ type Restoration = {
 
 type AlbumPageConfig = {
   id: string;
+  layout: AlbumPageLayout;
   note: string;
-  photoIds: number[];
+  photoIds: Array<number | null>;
   photoFits: Record<number, CalendarPhotoFit>;
   photosPerPage: number;
 };
+
+type AlbumPageLayout = "auto" | "full" | "story" | "mosaic" | "memory";
 
 type CalendarPhotoFit = "cover" | "contain" | "top";
 
@@ -147,6 +150,14 @@ const pageStyleOptions = [
 ];
 
 const photosPerPageOptions = [1, 2, 3, 4];
+
+const pageLayoutOptions: { id: AlbumPageLayout; label: string; detail: string }[] = [
+  { id: "auto", label: "Auto", detail: "Recommandé" },
+  { id: "full", label: "Pleine page", detail: "1 photo" },
+  { id: "story", label: "Récit", detail: "2 photos" },
+  { id: "mosaic", label: "Mosaïque", detail: "2 à 4 photos" },
+  { id: "memory", label: "Souvenir", detail: "3 photos" },
+];
 
 const calendarPhotoFitOptions: { id: CalendarPhotoFit; label: string; detail: string }[] = [
   { id: "cover", label: "Remplir", detail: "Plein cadre" },
@@ -275,8 +286,12 @@ function createInitialPages(items: Restoration[]): AlbumPageConfig[] {
 
   return usefulChunks.map((chunk, index) => ({
     id: `page-${index + 1}`,
+    layout: "auto",
     note: "",
-    photoIds: chunk.map((item) => item.id),
+    photoIds: [
+      ...chunk.map((item) => item.id),
+      ...Array.from({ length: Math.max(0, 4 - chunk.length) }, () => null),
+    ],
     photoFits: Object.fromEntries(chunk.map((item) => [item.id, "cover"])),
     photosPerPage: Math.max(1, Math.min(4, chunk.length || 4)),
   }));
@@ -302,14 +317,73 @@ function getPickerItems(
   return [...selectedItems, ...otherItems];
 }
 
-function getPageGridClass(photosPerPage: number) {
-  return photosPerPage === 1 ? "grid grid-cols-1 gap-2" : "grid grid-cols-2 gap-2";
+function normalizePagePhotoIds(page: AlbumPageConfig) {
+  const photoIds = Array.isArray(page.photoIds) ? page.photoIds : [];
+
+  return [
+    ...photoIds.slice(0, page.photosPerPage),
+    ...Array.from(
+      { length: Math.max(0, page.photosPerPage - photoIds.length) },
+      () => null
+    ),
+  ];
 }
 
-function getPageImageClass(photosPerPage: number, index: number) {
-  if (photosPerPage === 1) return "aspect-square w-full rounded-xl";
-  if (photosPerPage === 2) return "aspect-[2/1] w-full rounded-xl";
-  if (photosPerPage === 3 && index === 0) return "col-span-2 aspect-[2/1] w-full rounded-xl";
+function getSelectedPagePhotoIds(page: AlbumPageConfig) {
+  return normalizePagePhotoIds(page).filter(
+    (photoId): photoId is number => typeof photoId === "number"
+  );
+}
+
+function getEffectivePageLayout(page: AlbumPageConfig): Exclude<AlbumPageLayout, "auto"> {
+  if (page.layout !== "auto") return page.layout;
+  if (page.photosPerPage === 1) return "full";
+  if (page.photosPerPage === 2) return "story";
+  if (page.photosPerPage === 3) return "memory";
+  return "mosaic";
+}
+
+function getLayoutMaxPhotos(layout: AlbumPageLayout) {
+  if (layout === "full") return 1;
+  if (layout === "story") return 2;
+  if (layout === "memory") return 3;
+  return 4;
+}
+
+function isPageLayoutAvailable(layout: AlbumPageLayout, photosPerPage: number) {
+  if (layout === "auto") return true;
+  if (layout === "full") return photosPerPage === 1;
+  if (layout === "story") return photosPerPage === 2;
+  if (layout === "memory") return photosPerPage === 3;
+  return photosPerPage >= 2 && photosPerPage <= 4;
+}
+
+function getAutoLayoutLabel(photosPerPage: number) {
+  if (photosPerPage === 1) return "Pleine page";
+  if (photosPerPage === 2) return "Récit";
+  if (photosPerPage === 3) return "Souvenir";
+  return "Mosaïque";
+}
+
+function getPageGridClass(page: AlbumPageConfig) {
+  const layout = getEffectivePageLayout(page);
+
+  if (layout === "full") return "grid grid-cols-1 gap-3";
+  if (layout === "story") return "grid grid-cols-2 gap-3";
+  if (layout === "memory") return "grid grid-cols-2 gap-3";
+  return page.photosPerPage === 1 ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3";
+}
+
+function getPageImageClass(page: AlbumPageConfig, index: number) {
+  const layout = getEffectivePageLayout(page);
+
+  if (layout === "full") return "aspect-square w-full rounded-xl";
+  if (layout === "story") return "col-span-2 aspect-[16/9] w-full rounded-xl";
+  if (layout === "memory" && index === 0) return "col-span-2 aspect-[16/10] w-full rounded-xl";
+  if (layout === "mosaic" && page.photosPerPage === 3 && index === 0) {
+    return "col-span-2 aspect-[2/1] w-full rounded-xl";
+  }
+  if (page.photosPerPage === 2 && layout === "mosaic") return "aspect-[2/1] w-full rounded-xl";
   return "aspect-square w-full rounded-xl";
 }
 
@@ -319,36 +393,6 @@ function getPhotoStyleClass(
 ) {
   if (pageStyle === "immersive") return "shadow-sm";
   return albumTheme.photoFrameClass;
-}
-
-function getPageExportSlotStyle(photosPerPage: number, index: number): CSSProperties {
-  const gap = 20;
-  const half = `calc((100% - ${gap}px) / 2)`;
-
-  if (photosPerPage === 1) {
-    return { bottom: 0, left: 0, position: "absolute", right: 0, top: 0 };
-  }
-
-  if (photosPerPage === 2) {
-    return index === 0
-      ? { height: half, left: 0, position: "absolute", right: 0, top: 0 }
-      : { bottom: 0, height: half, left: 0, position: "absolute", right: 0 };
-  }
-
-  if (photosPerPage === 3) {
-    if (index === 0) {
-      return { height: half, left: 0, position: "absolute", right: 0, top: 0 };
-    }
-
-    return index === 1
-      ? { bottom: 0, height: half, left: 0, position: "absolute", width: half }
-      : { bottom: 0, height: half, position: "absolute", right: 0, width: half };
-  }
-
-  if (index === 0) return { height: half, left: 0, position: "absolute", top: 0, width: half };
-  if (index === 1) return { height: half, position: "absolute", right: 0, top: 0, width: half };
-  if (index === 2) return { bottom: 0, height: half, left: 0, position: "absolute", width: half };
-  return { bottom: 0, height: half, position: "absolute", right: 0, width: half };
 }
 
 function getInteriorPageClass(
@@ -370,6 +414,10 @@ function getAlbumPdfPreviewClass() {
 
 function getAlbumImageExportPreviewClass() {
   return "mx-auto h-[800px] w-[800px] max-w-none shrink-0";
+}
+
+function getAlbumImageExportPageClass() {
+  return "mx-auto w-[800px] max-w-none shrink-0";
 }
 
 function getAlbumPdfPageClass() {
@@ -397,8 +445,16 @@ export default function AlbumPage() {
   const [saveError, setSaveError] = useState("");
   const [items, setItems] = useState<Restoration[]>([]);
   const [pages, setPages] = useState<AlbumPageConfig[]>([
-    { id: "page-1", note: "", photoIds: [], photoFits: {}, photosPerPage: 4 },
+    {
+      id: "page-1",
+      layout: "auto",
+      note: "",
+      photoIds: [null, null, null, null],
+      photoFits: {},
+      photosPerPage: 4,
+    },
   ]);
+  const [activePageSlots, setActivePageSlots] = useState<Record<string, number>>({});
   const [albumType, setAlbumType] = useState("souvenir");
   const [coverPhotoId, setCoverPhotoId] = useState<number | null>(null);
   const [coverPhotoFit, setCoverPhotoFit] = useState<CalendarPhotoFit>("cover");
@@ -455,10 +511,12 @@ export default function AlbumPage() {
     .map((photoId) => getPhotoById(items, photoId))
     .filter(Boolean) as Restoration[];
   const totalSelectedPhotos = pages.reduce(
-    (total, page) => total + page.photoIds.length,
+    (total, page) => total + getSelectedPagePhotoIds(page).length,
     0
   );
-  const emptyPagesCount = pages.filter((page) => page.photoIds.length === 0).length;
+  const emptyPagesCount = pages.filter(
+    (page) => getSelectedPagePhotoIds(page).length === 0
+  ).length;
   const configuredCalendarMonths = calendarMonths.filter(
     (month) => month.photoId || month.caption.trim() || month.importantDates.trim()
   ).length;
@@ -478,7 +536,7 @@ export default function AlbumPage() {
       : [
           Boolean(albumType && format),
           Boolean(title.trim() && coverText.trim() && coverPhoto),
-          pages.some((page) => page.photoIds.length > 0),
+          pages.some((page) => getSelectedPagePhotoIds(page).length > 0),
         ];
   const completedStepsCount = completedSteps.filter(Boolean).length;
   const progressLabels =
@@ -499,7 +557,7 @@ export default function AlbumPage() {
           : calendarPosterPhotoIds.slice(0, 3)
         : [
             ...(coverPhotoId ? [coverPhotoId] : []),
-            ...pages.flatMap((page) => page.photoIds),
+            ...pages.flatMap((page) => getSelectedPagePhotoIds(page)),
           ]
     )
   );
@@ -552,6 +610,80 @@ export default function AlbumPage() {
 
     return [firstSpread, ...chunkArray(rest, 2)];
   }, [pages]);
+  const photoUsage = useMemo(() => {
+    const usage = new Map<number, { pageIndex: number; slotIndex: number }>();
+
+    pages.forEach((page, pageIndex) => {
+      normalizePagePhotoIds(page).forEach((photoId, slotIndex) => {
+        if (typeof photoId === "number" && !usage.has(photoId)) {
+          usage.set(photoId, { pageIndex, slotIndex });
+        }
+      });
+    });
+
+    return usage;
+  }, [pages]);
+
+  function getActiveSlotIndex(page: AlbumPageConfig) {
+    const savedSlotIndex = activePageSlots[page.id];
+
+    if (
+      typeof savedSlotIndex === "number" &&
+      savedSlotIndex >= 0 &&
+      savedSlotIndex < page.photosPerPage
+    ) {
+      return savedSlotIndex;
+    }
+
+    const emptySlotIndex = normalizePagePhotoIds(page).findIndex(
+      (photoId) => photoId === null
+    );
+
+    return emptySlotIndex >= 0 ? emptySlotIndex : 0;
+  }
+
+  function scrollToAlbumSection(sectionId: string) {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }
+
+  function renderAlbumJumpNav(activeId: string) {
+    if (albumType === "calendar") return null;
+
+    const navItems = [
+      { id: "album-cover-editor", label: "Couverture" },
+      ...pages.map((page, index) => ({
+        id: `album-page-editor-${page.id}`,
+        label: `Page ${index + 1}`,
+      })),
+    ];
+
+    return (
+      <div className="mb-5 rounded-2xl border border-purple-100 bg-purple-50/80 p-3">
+        <p className="mb-2 text-xs font-black uppercase tracking-[0.14em] text-purple-700">
+          Aller à
+        </p>
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => scrollToAlbumSection(item.id)}
+              className={`shrink-0 rounded-full px-4 py-2 text-xs font-black transition ${
+                activeId === item.id
+                  ? "bg-purple-600 text-white shadow-sm"
+                  : "bg-white text-purple-700 hover:bg-purple-100"
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   function getAlbumSaveConfig(): AlbumSaveConfig {
     return {
@@ -621,10 +753,23 @@ export default function AlbumPage() {
     if (typeof config.closingText === "string") setClosingText(config.closingText);
     if (Array.isArray(config.pages) && config.pages.length > 0) {
       setPages(
-        config.pages.map((page) => ({
-          ...page,
-          photoFits: page.photoFits ?? {},
-        }))
+        config.pages.map((page) => {
+          const photosPerPage = Math.max(
+            1,
+            Math.min(4, page.photosPerPage ?? 4)
+          );
+          const nextPage = {
+            ...page,
+            layout: page.layout ?? "auto",
+            photoFits: page.photoFits ?? {},
+            photosPerPage,
+          };
+
+          return {
+            ...nextPage,
+            photoIds: normalizePagePhotoIds(nextPage),
+          };
+        })
       );
     }
   }
@@ -827,19 +972,28 @@ export default function AlbumPage() {
     );
   }
 
-  function togglePhotoOnPage(pageIndex: number, photoId: number) {
+  function setPhotoOnPageSlot(
+    pageIndex: number,
+    slotIndex: number,
+    photoId: number | null
+  ) {
     setPages((current) =>
       current.map((page, index) => {
         if (index !== pageIndex) return page;
 
-        const alreadySelected = page.photoIds.includes(photoId);
-        const nextPhotoIds = alreadySelected
-          ? page.photoIds.filter((id) => id !== photoId)
-          : page.photoIds.length >= page.photosPerPage
-            ? [...page.photoIds.slice(1), photoId]
-            : [...page.photoIds, photoId];
+        const nextPhotoIds = normalizePagePhotoIds(page);
+        const existingSlotIndex =
+          typeof photoId === "number" ? nextPhotoIds.indexOf(photoId) : -1;
+
+        if (existingSlotIndex >= 0 && existingSlotIndex !== slotIndex) {
+          nextPhotoIds[existingSlotIndex] = null;
+        }
+
+        nextPhotoIds[slotIndex] = photoId;
         const nextPhotoFits = Object.fromEntries(
-          nextPhotoIds.map((id) => [id, page.photoFits[id] ?? "cover"])
+          nextPhotoIds
+            .filter((id): id is number => typeof id === "number")
+            .map((id) => [id, page.photoFits[id] ?? "cover"])
         );
 
         return { ...page, photoIds: nextPhotoIds, photoFits: nextPhotoFits };
@@ -853,16 +1007,44 @@ export default function AlbumPage() {
         index === pageIndex
           ? {
               ...page,
+              layout:
+                page.layout !== "auto" && photosPerPage > getLayoutMaxPhotos(page.layout)
+                  ? "auto"
+                  : page.layout,
               photosPerPage,
-              photoIds: page.photoIds.slice(0, photosPerPage),
+              photoIds: normalizePagePhotoIds(page).slice(0, photosPerPage),
               photoFits: Object.fromEntries(
-                page.photoIds
+                normalizePagePhotoIds(page)
                   .slice(0, photosPerPage)
+                  .filter((photoId): photoId is number => typeof photoId === "number")
                   .map((photoId) => [photoId, page.photoFits[photoId] ?? "cover"])
               ),
             }
           : page
       )
+    );
+  }
+
+  function updatePageLayout(pageIndex: number, layout: AlbumPageLayout) {
+    setPages((current) =>
+      current.map((page, index) => {
+        if (index !== pageIndex) return page;
+
+        const photosPerPage = Math.min(page.photosPerPage, getLayoutMaxPhotos(layout));
+        const photoIds = normalizePagePhotoIds(page).slice(0, photosPerPage);
+
+        return {
+          ...page,
+          layout,
+          photosPerPage,
+          photoIds,
+          photoFits: Object.fromEntries(
+            photoIds
+              .filter((photoId): photoId is number => typeof photoId === "number")
+              .map((photoId) => [photoId, page.photoFits[photoId] ?? "cover"])
+          ),
+        };
+      })
     );
   }
 
@@ -892,8 +1074,9 @@ export default function AlbumPage() {
 
       const newPage = {
         id: nextPageId,
+        layout: "auto" as AlbumPageLayout,
         note: "",
-        photoIds: [],
+        photoIds: [null, null, null, null],
         photoFits: {},
         photosPerPage: 4,
       };
@@ -992,47 +1175,40 @@ export default function AlbumPage() {
     className = "",
     cleanExport = false
   ) {
-    const pagePhotos = page.photoIds
-      .map((photoId) => getPhotoById(items, photoId))
-      .filter(Boolean) as Restoration[];
+    const pageSlots = normalizePagePhotoIds(page);
+    const pagePhotos = pageSlots.map((photoId) =>
+      typeof photoId === "number" ? getPhotoById(items, photoId) : null
+    );
+    const selectedPhotoCount = pagePhotos.filter(Boolean).length;
 
     if (cleanExport) {
-      const slots = Array.from({ length: page.photosPerPage });
-      const hasNote = Boolean(page.note);
-
       return (
         <div className={`${getInteriorPageClass(pageStyle, selectedTheme)} ${className}`}>
-          <div
-            className="absolute inset-4"
-            style={{ bottom: hasNote ? 104 : 16 }}
-          >
-            {slots.map((_, slotIndex) => {
-              const photo = pagePhotos[slotIndex] ?? null;
-
-              return (
+          <div className={getPageGridClass(page)}>
+            {pagePhotos.map((photo, photoIndex) =>
+              photo ? (
                 <div
-                  key={`${page.id}-export-slot-${slotIndex}`}
-                  style={getPageExportSlotStyle(page.photosPerPage, slotIndex)}
+                  key={`${page.id}-export-${photo.id}-${photoIndex}`}
+                  className={`${getPageImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)}`}
                 >
-                  {photo ? (
-                    renderRestoredPhoto(
-                      photo,
-                      `Page ${pageIndex + 1} photo ${slotIndex + 1}`,
-                      "h-full w-full bg-white shadow-sm",
-                      getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
-                    )
-                  ) : (
-                    <span
-                      className={`block h-full w-full rounded-2xl border-2 border-dashed ${selectedTheme.borderClass}`}
-                    />
+                  {renderRestoredPhoto(
+                    photo,
+                    `Page ${pageIndex + 1} photo ${photoIndex + 1}`,
+                    "h-full w-full",
+                    getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
                   )}
                 </div>
-              );
-            })}
+              ) : (
+                <span
+                  key={`${page.id}-export-empty-${photoIndex}`}
+                  className={`${getPageImageClass(page, photoIndex)} rounded-xl border-2 border-dashed ${selectedTheme.borderClass} bg-white/45`}
+                />
+              )
+            )}
           </div>
 
-          {hasNote && (
-            <p className={`absolute bottom-4 left-4 right-4 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
+          {page.note && (
+            <p className={`mt-4 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
               {page.note}
             </p>
           )}
@@ -1047,42 +1223,33 @@ export default function AlbumPage() {
         )}
         <div className="mb-2 flex items-center justify-between text-xs font-black text-gray-400">
           <span>Page {pageIndex + 1}</span>
-          <span>{page.photoIds.length}/{page.photosPerPage} photo(s)</span>
+          <span>{selectedPhotoCount}/{page.photosPerPage} photo(s)</span>
         </div>
 
-        <div className={getPageGridClass(page.photosPerPage)}>
-          {pagePhotos.map((photo, photoIndex) => (
-            <div
-              key={`${page.id}-${photo.id}`}
-              className={`${getPageImageClass(page.photosPerPage, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)}`}
-            >
-              {renderRestoredPhoto(
-                photo,
-                `Page ${pageIndex + 1} photo ${photo.id}`,
-                "h-full w-full",
-                getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
-              )}
-            </div>
-          ))}
-
-          {pagePhotos.length === 0 &&
-            placeholderFrames.slice(0, page.photosPerPage).map((frameClass, frameIndex) => (
+        <div className={getPageGridClass(page)}>
+          {pagePhotos.map((photo, photoIndex) =>
+            photo ? (
+              <div
+                key={`${page.id}-${photo.id}-${photoIndex}`}
+                className={`${getPageImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)}`}
+              >
+                {renderRestoredPhoto(
+                  photo,
+                  `Page ${pageIndex + 1} photo ${photo.id}`,
+                  "h-full w-full",
+                  getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
+                )}
+              </div>
+            ) : (
               <span
-                key={`${page.id}-placeholder-${frameIndex}`}
-                className={`${getPageImageClass(page.photosPerPage, frameIndex)} ${frameClass}`}
+                key={`${page.id}-empty-slot-${photoIndex}`}
+                className={`${getPageImageClass(page, photoIndex)} border-2 border-dashed ${selectedTheme.borderClass} bg-white/45`}
               />
-            ))}
-
-          {pagePhotos.length > 0 &&
-            Array.from({ length: page.photosPerPage - pagePhotos.length }).map((_, emptyIndex) => (
-              <span
-                key={`${page.id}-empty-${emptyIndex}`}
-                className={`${getPageImageClass(page.photosPerPage, pagePhotos.length + emptyIndex)} border-2 border-dashed ${selectedTheme.borderClass}`}
-              />
-            ))}
+            )
+          )}
         </div>
 
-        {(page.note || pagePhotos.length === 0) && (
+        {(page.note || selectedPhotoCount === 0) && (
           <p className={`mt-3 rounded-xl px-3 py-2 text-xs font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
             {page.note || "Emplacement prévu pour une date, un lieu ou une anecdote familiale."}
           </p>
@@ -2143,41 +2310,60 @@ export default function AlbumPage() {
               </>
             ) : (
               <>
-            <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
+            <section
+              id="album-cover-editor"
+              className="scroll-mt-32 bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60"
+            >
               <p className="text-sm font-black text-purple-700 mb-2">Étape 2</p>
               <h2 className="text-2xl font-black mb-5">Composer la couverture</h2>
+              {renderAlbumJumpNav("album-cover-editor")}
 
               <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_620px] 2xl:items-start">
                 <div>
                   <div className="space-y-4">
-                    <label className="block">
-                      <span className="block text-sm font-bold text-gray-600 mb-2">Titre</span>
+                    <label className="block rounded-2xl border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
+                      <span className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-purple-800">
+                        <span>Titre de couverture</span>
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-purple-700">
+                          À personnaliser
+                        </span>
+                      </span>
                       <input
                         value={title}
                         onChange={(event) => setTitle(event.target.value)}
-                        className="w-full rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
+                        className="w-full rounded-2xl border border-purple-200 bg-white px-5 py-4 text-lg font-semibold outline-none focus:border-purple-500"
                       />
                     </label>
 
-                    <label className="block">
-                      <span className="block text-sm font-bold text-gray-600 mb-2">
+                    <label className="block rounded-2xl border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
+                      <span className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-purple-800">
+                        <span>
                         Texte de couverture
+                        </span>
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-purple-700">
+                          Visible sur la couverture
+                        </span>
                       </span>
                       <textarea
                         value={coverText}
                         onChange={(event) => setCoverText(event.target.value)}
                         rows={3}
-                        className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
+                        className="w-full resize-none rounded-2xl border border-purple-200 bg-white px-5 py-4 font-semibold outline-none focus:border-purple-500"
                       />
                     </label>
 
-                    <label className="block">
-                      <span className="block text-sm font-bold text-gray-600 mb-2">Dédicace</span>
+                    <label className="block rounded-2xl border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
+                      <span className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-purple-800">
+                        <span>Dédicace</span>
+                        <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-purple-700">
+                          Texte souvenir
+                        </span>
+                      </span>
                       <textarea
                         value={dedication}
                         onChange={(event) => setDedication(event.target.value)}
                         rows={3}
-                        className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
+                        className="w-full resize-none rounded-2xl border border-purple-200 bg-white px-5 py-4 font-semibold outline-none focus:border-purple-500"
                       />
                     </label>
                   </div>
@@ -2353,8 +2539,24 @@ export default function AlbumPage() {
               </label>
 
               <div className="space-y-6">
-                {pages.map((page, pageIndex) => (
-                  <div key={page.id} className="rounded-[1.5rem] bg-white p-5 shadow-sm">
+                {pages.map((page, pageIndex) => {
+                  const pageSlots = normalizePagePhotoIds(page);
+                  const selectedPagePhotoIds = getSelectedPagePhotoIds(page);
+                  const activeSlotIndex = getActiveSlotIndex(page);
+                  const availableItems = getPickerItems(
+                    items.filter((item) => {
+                      const usage = photoUsage.get(item.id);
+                      return !usage || usage.pageIndex === pageIndex;
+                    }),
+                    pageSlots
+                  );
+
+                  return (
+                  <div
+                    key={page.id}
+                    id={`album-page-editor-${page.id}`}
+                    className="scroll-mt-32 rounded-[1.5rem] bg-white p-5 shadow-sm"
+                  >
                     <div className="mb-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
                       <div>
                         <p className="text-sm font-black text-purple-700">Page {pageIndex + 1}</p>
@@ -2382,6 +2584,7 @@ export default function AlbumPage() {
                         </button>
                       </div>
                     </div>
+                    {renderAlbumJumpNav(`album-page-editor-${page.id}`)}
 
                     <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_620px] 2xl:items-start">
                       <div>
@@ -2406,77 +2609,192 @@ export default function AlbumPage() {
                           </div>
                         </div>
 
-                        <label className="mb-5 block">
-                          <span className="block text-sm font-bold text-gray-600 mb-2">
-                            Texte ou anecdote de la page
+                        <div className="mb-5">
+                          <div className="mb-3 flex flex-col gap-1">
+                            <p className="text-sm font-bold text-gray-600">Mise en page</p>
+                            <p className="text-xs font-semibold text-gray-400">
+                              Avec {page.photosPerPage} photo{page.photosPerPage > 1 ? "s" : ""}, le mode Auto propose : {getAutoLayoutLabel(page.photosPerPage)}.
+                            </p>
+                          </div>
+                          <div className="grid gap-3 sm:grid-cols-3">
+                            {(() => {
+                              const visibleLayout =
+                                isPageLayoutAvailable(page.layout, page.photosPerPage)
+                                  ? page.layout
+                                  : "auto";
+
+                              return pageLayoutOptions
+                              .filter((option) =>
+                                isPageLayoutAvailable(option.id, page.photosPerPage)
+                              )
+                              .map((option) => (
+                              <button
+                                key={`${page.id}-layout-${option.id}`}
+                                type="button"
+                                onClick={() => updatePageLayout(pageIndex, option.id)}
+                                className={`min-h-[76px] rounded-2xl border px-4 py-3 text-left ${
+                                  visibleLayout === option.id
+                                    ? "border-purple-500 bg-purple-50 text-purple-700"
+                                    : "border-gray-100 bg-white text-gray-600"
+                                }`}
+                              >
+                                <span className="block whitespace-nowrap text-sm font-black">{option.label}</span>
+                                <span className="mt-1 block text-xs font-semibold">{option.detail}</span>
+                              </button>
+                              ));
+                            })()}
+                          </div>
+                        </div>
+
+                        <label className="mb-5 block rounded-2xl border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
+                          <span className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-purple-800">
+                            <span>Texte ou anecdote de la page</span>
+                            <span className="rounded-full bg-white px-3 py-1 text-[11px] uppercase tracking-[0.12em] text-purple-700">
+                              Visible sous les photos
+                            </span>
                           </span>
                           <textarea
                             value={page.note}
                             onChange={(event) => updatePage(pageIndex, { note: event.target.value })}
                             placeholder="Ex. Été 1968, vacances en famille à Biarritz."
                             rows={2}
-                            className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
+                            className="w-full resize-none rounded-2xl border border-purple-200 bg-white px-5 py-4 font-semibold outline-none focus:border-purple-500"
                           />
                         </label>
 
-                        {page.photoIds.length > 0 && (
-                          <div className="mb-5 rounded-2xl bg-purple-50 p-4">
-                            <p className="mb-3 text-sm font-black text-purple-700">
-                              Cadrage des photos sélectionnées
+                        <div className="mb-5 rounded-2xl bg-purple-50 p-4">
+                          <div className="mb-3 flex flex-col gap-1">
+                            <p className="text-sm font-black text-purple-700">
+                              Emplacements et cadrage
                             </p>
+                            <p className="text-xs font-semibold text-purple-700/70">
+                              Choisissez l’emplacement à modifier, puis sélectionnez une photo ci-dessous.
+                            </p>
+                          </div>
                             <div className="grid gap-3">
-                              {page.photoIds.map((photoId, selectedIndex) => {
-                                const selectedPhoto = getPhotoById(items, photoId);
-                                if (!selectedPhoto) return null;
+                              {pageSlots.map((photoId, slotIndex) => {
+                                const selectedPhoto =
+                                  typeof photoId === "number"
+                                    ? getPhotoById(items, photoId)
+                                    : null;
+                                const isActiveSlot = activeSlotIndex === slotIndex;
 
                                 return (
                                   <div
-                                    key={`${page.id}-fit-${photoId}`}
-                                    className="grid gap-3 rounded-2xl bg-white p-3 sm:grid-cols-[96px_1fr] sm:items-center"
+                                    key={`${page.id}-slot-${slotIndex}`}
+                                    className={`grid gap-3 rounded-2xl border bg-white p-3 sm:grid-cols-[96px_1fr] sm:items-center ${
+                                      isActiveSlot
+                                        ? "border-purple-400 shadow-sm"
+                                        : "border-transparent"
+                                    }`}
                                   >
-                                    <img
-                                      src={selectedPhoto.restored_url}
-                                      alt={`Photo sélectionnée ${selectedIndex + 1}`}
-                                      className={`h-20 w-full rounded-xl bg-black/5 sm:w-24 ${getPhotoFitObjectClass(page.photoFits[photoId] ?? "cover")}`}
-                                    />
+                                    {selectedPhoto ? (
+                                      <img
+                                        src={selectedPhoto.restored_url}
+                                        alt={`Photo ${slotIndex + 1}`}
+                                        className={`h-20 w-full rounded-xl bg-black/5 sm:w-24 ${getPhotoFitObjectClass(page.photoFits[selectedPhoto.id] ?? "cover")}`}
+                                      />
+                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setActivePageSlots((current) => ({
+                                            ...current,
+                                            [page.id]: slotIndex,
+                                          }))
+                                        }
+                                        className={`flex h-20 w-full items-center justify-center rounded-xl border-2 border-dashed text-xs font-black sm:w-24 ${
+                                          isActiveSlot
+                                            ? "border-purple-400 bg-purple-50 text-purple-700"
+                                            : "border-gray-200 bg-white text-gray-400"
+                                        }`}
+                                      >
+                                        Vide
+                                      </button>
+                                    )}
                                     <div>
-                                      <p className="mb-2 text-xs font-black text-gray-500">
-                                        Photo {selectedIndex + 1}
-                                      </p>
-                                      <div className="grid grid-cols-3 gap-2">
-                                        {calendarPhotoFitOptions.map((fitOption) => (
+                                      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                                        <p className="text-xs font-black text-gray-500">
+                                          Photo {slotIndex + 1}
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
                                           <button
-                                            key={`${page.id}-${photoId}-${fitOption.id}`}
                                             type="button"
                                             onClick={() =>
-                                              updatePagePhotoFit(pageIndex, photoId, fitOption.id)
+                                              setActivePageSlots((current) => ({
+                                                ...current,
+                                                [page.id]: slotIndex,
+                                              }))
                                             }
-                                            className={`rounded-xl px-3 py-2 text-left text-xs font-black ${
-                                              (page.photoFits[photoId] ?? "cover") === fitOption.id
-                                                ? "bg-purple-600 text-white shadow-sm"
+                                            className={`rounded-full px-3 py-1 text-[11px] font-black ${
+                                              isActiveSlot
+                                                ? "bg-purple-600 text-white"
                                                 : "bg-purple-50 text-purple-700"
                                             }`}
-                                            title={fitOption.detail}
                                           >
-                                            {fitOption.label}
+                                            {selectedPhoto ? "Remplacer" : "Choisir"}
                                           </button>
-                                        ))}
+                                          {selectedPhoto && (
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                setPhotoOnPageSlot(pageIndex, slotIndex, null)
+                                              }
+                                              className="rounded-full bg-red-50 px-3 py-1 text-[11px] font-black text-red-600"
+                                            >
+                                              Retirer
+                                            </button>
+                                          )}
+                                        </div>
                                       </div>
+                                      {selectedPhoto ? (
+                                        <div className="grid grid-cols-3 gap-2">
+                                          {calendarPhotoFitOptions.map((fitOption) => (
+                                            <button
+                                              key={`${page.id}-${selectedPhoto.id}-${fitOption.id}`}
+                                              type="button"
+                                              onClick={() =>
+                                                updatePagePhotoFit(
+                                                  pageIndex,
+                                                  selectedPhoto.id,
+                                                  fitOption.id
+                                                )
+                                              }
+                                              className={`rounded-xl px-3 py-2 text-left text-xs font-black ${
+                                                (page.photoFits[selectedPhoto.id] ?? "cover") === fitOption.id
+                                                  ? "bg-purple-600 text-white shadow-sm"
+                                                  : "bg-purple-50 text-purple-700"
+                                              }`}
+                                              title={fitOption.detail}
+                                            >
+                                              {fitOption.label}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <p className="rounded-xl bg-purple-50 px-3 py-2 text-xs font-semibold text-purple-700">
+                                          Sélectionnez cet emplacement puis cliquez sur une photo.
+                                        </p>
+                                      )}
                                     </div>
                                   </div>
                                 );
                               })}
                             </div>
                           </div>
-                        )}
 
                         <div>
                           <div className="mb-3 flex items-center justify-between gap-3">
-                            <p className="text-sm font-bold text-gray-600">
-                              Sélectionner les photos de cette page
-                            </p>
+                            <div>
+                              <p className="text-sm font-bold text-gray-600">
+                                Choisir une photo pour l’emplacement {activeSlotIndex + 1}
+                              </p>
+                              <p className="text-xs font-semibold text-gray-400">
+                                Les photos déjà utilisées sur d’autres pages sont masquées pour éviter les doublons.
+                              </p>
+                            </div>
                             <span className="text-sm font-black text-gray-400">
-                              {page.photoIds.length}/{page.photosPerPage}
+                              {selectedPagePhotoIds.length}/{page.photosPerPage}
                             </span>
                           </div>
 
@@ -2492,14 +2810,17 @@ export default function AlbumPage() {
                             </div>
                           ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                              {items.map((item) => {
-                                const selected = page.photoIds.includes(item.id);
+                              {availableItems.map((item) => {
+                                const selectedSlotIndex = pageSlots.indexOf(item.id);
+                                const selected = selectedSlotIndex >= 0;
 
                                 return (
                                   <button
                                     key={`${page.id}-${item.id}`}
                                     type="button"
-                                    onClick={() => togglePhotoOnPage(pageIndex, item.id)}
+                                    onClick={() =>
+                                      setPhotoOnPageSlot(pageIndex, activeSlotIndex, item.id)
+                                    }
                                     className={`overflow-hidden rounded-2xl border text-left ${
                                       selected
                                         ? "border-purple-500 bg-purple-50 shadow-lg"
@@ -2520,7 +2841,9 @@ export default function AlbumPage() {
                                     </div>
                                     <div className="p-3">
                                       <span className={`text-xs font-black ${selected ? "text-purple-700" : "text-gray-500"}`}>
-                                        {selected ? "Sélectionnée" : "Ajouter"}
+                                        {selected
+                                          ? `Photo ${selectedSlotIndex + 1}`
+                                          : `Choisir pour photo ${activeSlotIndex + 1}`}
                                       </span>
                                     </div>
                                   </button>
@@ -2545,33 +2868,11 @@ export default function AlbumPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </section>
 
-            <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
-              <h2 className="text-2xl font-black mb-5">Textes de début et de fin</h2>
-              <div className="space-y-4">
-                <label className="block">
-                  <span className="block text-sm font-bold text-gray-600 mb-2">Introduction</span>
-                  <textarea
-                    value={introText}
-                    onChange={(event) => setIntroText(event.target.value)}
-                    rows={4}
-                    className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
-                  />
-                </label>
-                <label className="block">
-                  <span className="block text-sm font-bold text-gray-600 mb-2">Texte de fin</span>
-                  <textarea
-                    value={closingText}
-                    onChange={(event) => setClosingText(event.target.value)}
-                    rows={3}
-                    className="w-full resize-none rounded-2xl border border-gray-200 bg-white px-5 py-4 outline-none focus:border-purple-400"
-                  />
-                </label>
-              </div>
-            </section>
               </>
             )}
           </div>
@@ -2708,7 +3009,7 @@ export default function AlbumPage() {
                   </div>
                   <div className="rounded-2xl bg-white/75 p-3">
                     <p className="text-xs font-bold text-gray-500">Pages</p>
-                    <p className="text-xl font-black">{pages.length + 2}</p>
+                    <p className="text-xl font-black">{pages.length}</p>
                   </div>
                   <div className="rounded-2xl bg-white/75 p-3">
                     <p className="text-xs font-bold text-gray-500">Format</p>
@@ -2722,7 +3023,7 @@ export default function AlbumPage() {
                       Verso de couverture
                     </p>
                     <p className={`text-sm leading-relaxed ${selectedTheme.coverTextClass}`}>
-                      {introText}
+                      Page laissée libre pour respecter les contraintes d’impression.
                     </p>
                   </div>
 
@@ -2754,7 +3055,7 @@ export default function AlbumPage() {
                                     Verso couverture
                                   </p>
                                   <div className={`flex h-[210px] items-center justify-center rounded-xl border-2 border-dashed ${selectedTheme.borderClass} px-4 text-center text-xs font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
-                                    {introText}
+                                    Page volontairement libre
                                   </div>
                                 </div>
                               );
@@ -2783,14 +3084,6 @@ export default function AlbumPage() {
                     ))}
                   </div>
 
-                  <div className={`mt-4 rounded-2xl ${selectedTheme.pageClass} p-4 shadow-sm`}>
-                    <p className={`mb-2 text-xs font-black ${selectedTheme.textClass}`}>
-                      Texte de fin
-                    </p>
-                    <p className={`text-sm leading-relaxed ${selectedTheme.coverTextClass}`}>
-                      {closingText}
-                    </p>
-                  </div>
                 </div>
 
                 <div className="mt-8 grid gap-3">
@@ -2896,17 +3189,6 @@ export default function AlbumPage() {
               {renderCoverPreview(getAlbumPdfPreviewClass())}
             </div>
 
-            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
-              <div className={`${getAlbumPdfPreviewClass()} rounded-2xl ${selectedTheme.pageClass} p-10 shadow-sm`}>
-                <p className={`mb-5 text-xs font-black uppercase tracking-[0.18em] ${selectedTheme.textClass}`}>
-                  Verso de couverture
-                </p>
-                <p className={`text-lg font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
-                  {introText}
-                </p>
-              </div>
-            </div>
-
             {pages.map((page, pageIndex) => (
               <div
                 key={`pdf-page-${page.id}`}
@@ -2919,17 +3201,6 @@ export default function AlbumPage() {
                 )}
               </div>
             ))}
-
-            <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
-              <div className={`${getAlbumPdfPreviewClass()} rounded-2xl ${selectedTheme.pageClass} p-10 shadow-sm`}>
-                <p className={`mb-5 text-xs font-black uppercase tracking-[0.18em] ${selectedTheme.textClass}`}>
-                  Texte de fin
-                </p>
-                <p className={`text-lg font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
-                  {closingText}
-                </p>
-              </div>
-            </div>
           </div>
         )}
       </div>
@@ -2968,12 +3239,12 @@ export default function AlbumPage() {
               {pages.map((page, pageIndex) => (
                 <div
                   key={`export-page-${page.id}`}
-                  data-export-name={`${String(pageIndex + 2).padStart(2, "0")}-page-${pageIndex + 1}-${page.photoIds.length}-sur-${page.photosPerPage}-photos.png`}
+                  data-export-name={`${String(pageIndex + 2).padStart(2, "0")}-page-${pageIndex + 1}-${getSelectedPagePhotoIds(page).length}-sur-${page.photosPerPage}-photos.png`}
                 >
                   {renderPagePreview(
                     page,
                     pageIndex,
-                    getAlbumImageExportPreviewClass(),
+                    getAlbumImageExportPageClass(),
                     true
                   )}
                 </div>
