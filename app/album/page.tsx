@@ -27,9 +27,21 @@ type AlbumPageConfig = {
   photosPerPage: number;
 };
 
-type AlbumPageLayout = "auto" | "full" | "story" | "mosaic" | "memory";
+type AlbumPageLayout =
+  | "auto"
+  | "full"
+  | "story"
+  | "duo"
+  | "mosaic"
+  | "memory"
+  | "triptych";
 
 type CalendarPhotoFit = "cover" | "contain" | "top";
+
+type PhotoDimensions = {
+  height: number;
+  width: number;
+};
 
 type CalendarMonthConfig = {
   caption: string;
@@ -154,9 +166,11 @@ const photosPerPageOptions = [1, 2, 3, 4];
 const pageLayoutOptions: { id: AlbumPageLayout; label: string; detail: string }[] = [
   { id: "auto", label: "Auto", detail: "Recommandé" },
   { id: "full", label: "Pleine page", detail: "1 photo" },
-  { id: "story", label: "Récit", detail: "2 photos" },
-  { id: "mosaic", label: "Mosaïque", detail: "2 à 4 photos" },
-  { id: "memory", label: "Souvenir", detail: "3 photos" },
+  { id: "story", label: "Empilé", detail: "2 horizontales" },
+  { id: "duo", label: "Côte à côte", detail: "2 verticales" },
+  { id: "mosaic", label: "Mosaïque", detail: "3 à 4 photos" },
+  { id: "memory", label: "Bandeau + 2", detail: "3 photos" },
+  { id: "triptych", label: "Grande + 2", detail: "1 verticale + 2" },
 ];
 
 const calendarPhotoFitOptions: { id: CalendarPhotoFit; label: string; detail: string }[] = [
@@ -345,23 +359,23 @@ function getEffectivePageLayout(page: AlbumPageConfig): Exclude<AlbumPageLayout,
 
 function getLayoutMaxPhotos(layout: AlbumPageLayout) {
   if (layout === "full") return 1;
-  if (layout === "story") return 2;
-  if (layout === "memory") return 3;
+  if (layout === "story" || layout === "duo") return 2;
+  if (layout === "memory" || layout === "triptych") return 3;
   return 4;
 }
 
 function isPageLayoutAvailable(layout: AlbumPageLayout, photosPerPage: number) {
   if (layout === "auto") return true;
   if (layout === "full") return photosPerPage === 1;
-  if (layout === "story") return photosPerPage === 2;
-  if (layout === "memory") return photosPerPage === 3;
-  return photosPerPage >= 2 && photosPerPage <= 4;
+  if (layout === "story" || layout === "duo") return photosPerPage === 2;
+  if (layout === "memory" || layout === "triptych") return photosPerPage === 3;
+  return photosPerPage >= 3 && photosPerPage <= 4;
 }
 
 function getAutoLayoutLabel(photosPerPage: number) {
   if (photosPerPage === 1) return "Pleine page";
-  if (photosPerPage === 2) return "Récit";
-  if (photosPerPage === 3) return "Souvenir";
+  if (photosPerPage === 2) return "Empilé";
+  if (photosPerPage === 3) return "Bandeau + 2";
   return "Mosaïque";
 }
 
@@ -370,7 +384,9 @@ function getPageGridClass(page: AlbumPageConfig) {
 
   if (layout === "full") return "grid grid-cols-1 gap-3";
   if (layout === "story") return "grid grid-cols-2 gap-3";
+  if (layout === "duo") return "grid grid-cols-2 gap-3";
   if (layout === "memory") return "grid grid-cols-2 gap-3";
+  if (layout === "triptych") return "grid grid-cols-2 grid-rows-2 gap-3";
   return page.photosPerPage === 1 ? "grid grid-cols-1 gap-3" : "grid grid-cols-2 gap-3";
 }
 
@@ -379,12 +395,39 @@ function getPageImageClass(page: AlbumPageConfig, index: number) {
 
   if (layout === "full") return "aspect-square w-full rounded-xl";
   if (layout === "story") return "col-span-2 aspect-[16/9] w-full rounded-xl";
+  if (layout === "duo") return "aspect-[4/5] w-full rounded-xl";
   if (layout === "memory" && index === 0) return "col-span-2 aspect-[16/10] w-full rounded-xl";
+  if (layout === "triptych" && index === 0) return "row-span-2 aspect-[4/5] h-full w-full rounded-xl";
+  if (layout === "triptych") return "aspect-[4/3] w-full rounded-xl";
   if (layout === "mosaic" && page.photosPerPage === 3 && index === 0) {
     return "col-span-2 aspect-[2/1] w-full rounded-xl";
   }
   if (page.photosPerPage === 2 && layout === "mosaic") return "aspect-[2/1] w-full rounded-xl";
   return "aspect-square w-full rounded-xl";
+}
+
+function getPageExportGridClass(page: AlbumPageConfig) {
+  const layout = getEffectivePageLayout(page);
+
+  if (layout === "full") return "grid flex-1 grid-cols-1 gap-4";
+  if (layout === "story") return "grid flex-1 grid-cols-1 grid-rows-2 gap-4";
+  if (layout === "duo") return "grid flex-1 grid-cols-2 gap-4";
+  if (layout === "memory") return "grid flex-1 grid-cols-2 grid-rows-2 gap-4";
+  if (layout === "triptych") return "grid flex-1 grid-cols-2 grid-rows-2 gap-4";
+  return page.photosPerPage === 1
+    ? "grid flex-1 grid-cols-1 gap-4"
+    : "grid flex-1 grid-cols-2 grid-rows-2 gap-4";
+}
+
+function getPageExportImageClass(page: AlbumPageConfig, index: number) {
+  const layout = getEffectivePageLayout(page);
+
+  if (layout === "memory" && index === 0) return "col-span-2 h-full w-full rounded-xl";
+  if (layout === "triptych" && index === 0) return "row-span-2 h-full w-full rounded-xl";
+  if (layout === "mosaic" && page.photosPerPage === 3 && index === 0) {
+    return "col-span-2 h-full w-full rounded-xl";
+  }
+  return "h-full w-full rounded-xl";
 }
 
 function getPhotoStyleClass(
@@ -409,7 +452,7 @@ function getInteriorPageClass(
 }
 
 function getAlbumPdfPreviewClass() {
-  return "mx-auto w-[640px] max-w-none shrink-0";
+  return "mx-auto h-[800px] w-[800px] max-w-none shrink-0";
 }
 
 function getAlbumImageExportPreviewClass() {
@@ -417,7 +460,7 @@ function getAlbumImageExportPreviewClass() {
 }
 
 function getAlbumImageExportPageClass() {
-  return "mx-auto w-[800px] max-w-none shrink-0";
+  return "mx-auto h-[800px] w-[800px] max-w-none shrink-0";
 }
 
 function getAlbumPdfPageClass() {
@@ -444,6 +487,7 @@ export default function AlbumPage() {
   const [saveMessage, setSaveMessage] = useState("");
   const [saveError, setSaveError] = useState("");
   const [items, setItems] = useState<Restoration[]>([]);
+  const [photoDimensions, setPhotoDimensions] = useState<Record<number, PhotoDimensions>>({});
   const [pages, setPages] = useState<AlbumPageConfig[]>([
     {
       id: "page-1",
@@ -964,10 +1008,110 @@ export default function AlbumPage() {
     loadRestorations();
   }, [router]);
 
+  useEffect(() => {
+    if (items.length === 0) return;
+
+    let cancelled = false;
+
+    items.forEach((item) => {
+      if (photoDimensions[item.id]) return;
+
+      const image = new Image();
+
+      image.onload = () => {
+        if (cancelled || !image.naturalWidth || !image.naturalHeight) return;
+
+        setPhotoDimensions((current) =>
+          current[item.id]
+            ? current
+            : {
+                ...current,
+                [item.id]: {
+                  height: image.naturalHeight,
+                  width: image.naturalWidth,
+                },
+              }
+        );
+      };
+
+      image.src = item.restored_url;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [items, photoDimensions]);
+
+  useEffect(() => {
+    if (Object.keys(photoDimensions).length === 0) return;
+
+    setPages((current) =>
+      current.map((page) =>
+        page.layout === "auto"
+          ? {
+              ...page,
+              photoFits: getSmartPhotoFitsForPage(page),
+            }
+          : page
+      )
+    );
+  }, [photoDimensions]);
+
   function updatePage(pageIndex: number, nextPage: Partial<AlbumPageConfig>) {
     setPages((current) =>
       current.map((page, index) =>
         index === pageIndex ? { ...page, ...nextPage } : page
+      )
+    );
+  }
+
+  function getPageSlotAspect(page: AlbumPageConfig, slotIndex: number) {
+    const layout = getEffectivePageLayout(page);
+
+    if (layout === "story") return 16 / 9;
+    if (layout === "duo") return 4 / 5;
+    if (layout === "memory" && slotIndex === 0) return 16 / 10;
+    if (layout === "triptych" && slotIndex === 0) return 4 / 5;
+    if (layout === "triptych") return 4 / 3;
+    if (layout === "mosaic" && page.photosPerPage === 3 && slotIndex === 0) return 2;
+    if (layout === "mosaic" && page.photosPerPage === 2) return 2;
+    return 1;
+  }
+
+  function getSmartPhotoFit(
+    page: AlbumPageConfig,
+    slotIndex: number,
+    photoId: number
+  ): CalendarPhotoFit {
+    const dimensions = photoDimensions[photoId];
+
+    if (!dimensions?.width || !dimensions.height) return "cover";
+
+    const photoAspect = dimensions.width / dimensions.height;
+    const slotAspect = getPageSlotAspect(page, slotIndex);
+    const mismatch = photoAspect / slotAspect;
+
+    if (slotAspect <= 1.1) return "cover";
+    if (mismatch < 0.5 || mismatch > 2.4) return "contain";
+
+    return "cover";
+  }
+
+  function getSmartPhotoFitsForPage(page: AlbumPageConfig) {
+    const pageSlots = normalizePagePhotoIds(page);
+
+    return Object.fromEntries(
+      pageSlots.flatMap((photoId, slotIndex) =>
+        typeof photoId === "number"
+          ? [
+              [
+                photoId,
+                page.layout === "auto"
+                  ? getSmartPhotoFit(page, slotIndex, photoId)
+                  : page.photoFits[photoId] ?? "cover",
+              ],
+            ]
+          : []
       )
     );
   }
@@ -991,9 +1135,18 @@ export default function AlbumPage() {
 
         nextPhotoIds[slotIndex] = photoId;
         const nextPhotoFits = Object.fromEntries(
-          nextPhotoIds
-            .filter((id): id is number => typeof id === "number")
-            .map((id) => [id, page.photoFits[id] ?? "cover"])
+          nextPhotoIds.flatMap((id, index) =>
+            typeof id === "number"
+              ? [
+                  [
+                    id,
+                    page.layout === "auto"
+                      ? getSmartPhotoFit(page, index, id)
+                      : page.photoFits[id] ?? "cover",
+                  ],
+                ]
+              : []
+          )
         );
 
         return { ...page, photoIds: nextPhotoIds, photoFits: nextPhotoFits };
@@ -1003,25 +1156,24 @@ export default function AlbumPage() {
 
   function updatePhotosPerPage(pageIndex: number, photosPerPage: number) {
     setPages((current) =>
-      current.map((page, index) =>
-        index === pageIndex
-          ? {
-              ...page,
-              layout:
-                page.layout !== "auto" && photosPerPage > getLayoutMaxPhotos(page.layout)
-                  ? "auto"
-                  : page.layout,
-              photosPerPage,
-              photoIds: normalizePagePhotoIds(page).slice(0, photosPerPage),
-              photoFits: Object.fromEntries(
-                normalizePagePhotoIds(page)
-                  .slice(0, photosPerPage)
-                  .filter((photoId): photoId is number => typeof photoId === "number")
-                  .map((photoId) => [photoId, page.photoFits[photoId] ?? "cover"])
-              ),
-            }
-          : page
-      )
+      current.map((page, index) => {
+        if (index !== pageIndex) return page;
+
+        const nextPage = {
+          ...page,
+          layout:
+            page.layout !== "auto" && photosPerPage > getLayoutMaxPhotos(page.layout)
+              ? "auto" as AlbumPageLayout
+              : page.layout,
+          photosPerPage,
+          photoIds: normalizePagePhotoIds(page).slice(0, photosPerPage),
+        };
+
+        return {
+          ...nextPage,
+          photoFits: getSmartPhotoFitsForPage(nextPage),
+        };
+      })
     );
   }
 
@@ -1033,16 +1185,16 @@ export default function AlbumPage() {
         const photosPerPage = Math.min(page.photosPerPage, getLayoutMaxPhotos(layout));
         const photoIds = normalizePagePhotoIds(page).slice(0, photosPerPage);
 
-        return {
+        const nextPage = {
           ...page,
           layout,
           photosPerPage,
           photoIds,
-          photoFits: Object.fromEntries(
-            photoIds
-              .filter((photoId): photoId is number => typeof photoId === "number")
-              .map((photoId) => [photoId, page.photoFits[photoId] ?? "cover"])
-          ),
+        };
+
+        return {
+          ...nextPage,
+          photoFits: getSmartPhotoFitsForPage(nextPage),
         };
       })
     );
@@ -1183,13 +1335,15 @@ export default function AlbumPage() {
 
     if (cleanExport) {
       return (
-        <div className={`${getInteriorPageClass(pageStyle, selectedTheme)} ${className}`}>
-          <div className={getPageGridClass(page)}>
+        <div
+          className={`${getInteriorPageClass(pageStyle, selectedTheme)} ${className} flex flex-col overflow-hidden`}
+        >
+          <div className={getPageExportGridClass(page)}>
             {pagePhotos.map((photo, photoIndex) =>
               photo ? (
                 <div
                   key={`${page.id}-export-${photo.id}-${photoIndex}`}
-                  className={`${getPageImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)}`}
+                  className={`${getPageExportImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)} min-h-0 overflow-hidden`}
                 >
                   {renderRestoredPhoto(
                     photo,
@@ -1201,14 +1355,14 @@ export default function AlbumPage() {
               ) : (
                 <span
                   key={`${page.id}-export-empty-${photoIndex}`}
-                  className={`${getPageImageClass(page, photoIndex)} rounded-xl border-2 border-dashed ${selectedTheme.borderClass} bg-white/45`}
+                  className={`${getPageExportImageClass(page, photoIndex)} rounded-xl border-2 border-dashed ${selectedTheme.borderClass} bg-white/45`}
                 />
               )
             )}
           </div>
 
           {page.note && (
-            <p className={`mt-4 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
+            <p className={`mt-4 shrink-0 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
               {page.note}
             </p>
           )}
@@ -1254,6 +1408,90 @@ export default function AlbumPage() {
             {page.note || "Emplacement prévu pour une date, un lieu ou une anecdote familiale."}
           </p>
         )}
+      </div>
+    );
+  }
+
+  function getPrintExportGridClass(page: AlbumPageConfig) {
+    const layout = getEffectivePageLayout(page);
+
+    if (layout === "full") return "grid min-h-0 flex-1 grid-cols-1 gap-[18px]";
+    if (layout === "story") return "grid min-h-0 flex-1 grid-cols-1 grid-rows-2 gap-[18px]";
+    if (layout === "duo") return "grid min-h-0 flex-1 grid-cols-2 gap-[18px]";
+    if (layout === "memory") return "grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-[18px]";
+    if (layout === "triptych") return "grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-[18px]";
+    return page.photosPerPage === 1
+      ? "grid min-h-0 flex-1 grid-cols-1 gap-[18px]"
+      : "grid min-h-0 flex-1 grid-cols-2 grid-rows-2 gap-[18px]";
+  }
+
+  function getPrintExportImageClass(page: AlbumPageConfig, index: number) {
+    const layout = getEffectivePageLayout(page);
+
+    if (layout === "memory" && index === 0) return "col-span-2 h-full w-full";
+    if (layout === "triptych" && index === 0) return "row-span-2 h-full w-full";
+    if (layout === "mosaic" && page.photosPerPage === 3 && index === 0) {
+      return "col-span-2 h-full w-full";
+    }
+    return "h-full w-full";
+  }
+
+  function renderPrintPageExport(page: AlbumPageConfig) {
+    const pageSlots = normalizePagePhotoIds(page);
+    const pagePhotos = pageSlots.map((photoId) =>
+      typeof photoId === "number" ? getPhotoById(items, photoId) : null
+    );
+    const note = page.note.trim();
+
+    return (
+      <div className={`mx-auto h-[800px] w-[800px] max-w-none shrink-0 ${selectedTheme.pageClass}`}>
+        <div className="flex h-full flex-col overflow-hidden p-[36px]">
+          <div className={getPrintExportGridClass(page)}>
+            {pagePhotos.map((photo, photoIndex) =>
+              photo ? (
+                <div
+                  key={`${page.id}-print-${photo.id}-${photoIndex}`}
+                  className={`${getPrintExportImageClass(page, photoIndex)} min-h-0 overflow-hidden rounded-xl ${selectedTheme.pageClass} shadow-sm`}
+                >
+                  {renderRestoredPhoto(
+                    photo,
+                    `Photo album ${photoIndex + 1}`,
+                    "h-full w-full rounded-xl",
+                    getCalendarPhotoFitClass(page.photoFits[photo.id] ?? "cover")
+                  )}
+                </div>
+              ) : (
+                <span
+                  key={`${page.id}-print-empty-${photoIndex}`}
+                  className={`${getPrintExportImageClass(page, photoIndex)} rounded-xl ${selectedTheme.pageClass}`}
+                />
+              )
+            )}
+          </div>
+
+          {note ? (
+            <p className={`mt-[18px] h-[58px] shrink-0 overflow-hidden rounded-xl px-5 py-3 text-lg font-black leading-tight ${selectedTheme.noteClass}`}>
+              {note}
+            </p>
+          ) : (
+            <div className="mt-[18px] h-[58px] shrink-0" />
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderScaledPrintPagePreview(page: AlbumPageConfig) {
+    return (
+      <div
+        className={`mx-auto h-[260px] w-[260px] overflow-hidden rounded-2xl ${selectedTheme.pageClass} shadow-inner`}
+      >
+        <div
+          className="h-[800px] w-[800px] origin-top-left max-w-none shrink-0"
+          style={{ transform: "scale(0.325)" }}
+        >
+          {renderPrintPageExport(page)}
+        </div>
       </div>
     );
   }
@@ -1660,6 +1898,129 @@ export default function AlbumPage() {
     );
   }
 
+  function renderProgressCard() {
+    return (
+      <div className="rounded-[2rem] border border-purple-100 bg-gradient-to-br from-purple-100 via-white to-pink-100 p-6 shadow-sm">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
+              Progression
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              {completedStepsCount}/3 étape(s) complétée(s)
+            </h2>
+            <p className="mt-2 text-gray-600">
+              Avancez dans l’ordre pour composer un aperçu clair avant l’export.
+            </p>
+          </div>
+
+          <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:justify-end">
+            {progressLabels.map((label, index) => (
+              <span
+                key={label}
+                className={`min-w-[128px] rounded-2xl px-5 py-3 text-center text-sm font-black shadow-sm ${
+                  completedSteps[index]
+                    ? "bg-purple-600 text-white"
+                    : "bg-white text-gray-500"
+                }`}
+              >
+                {label}
+              </span>
+            ))}
+            <button
+              type="button"
+              onClick={saveCurrentAlbum}
+              disabled={savingAlbum || loading}
+              className="min-w-[160px] rounded-2xl bg-black px-5 py-3 text-center text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {savingAlbum ? "Sauvegarde..." : "Sauvegarder"}
+            </button>
+          </div>
+        </div>
+
+        {(saveMessage || saveError) && (
+          <div
+            className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${
+              saveError ? "bg-red-50 text-red-700" : "bg-white/80 text-purple-700"
+            }`}
+          >
+            {saveError || saveMessage}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderProjectSummaryCard() {
+    return (
+      <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-sm backdrop-blur-xl">
+        <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
+              Résumé du projet
+            </p>
+            <h2 className="mt-2 text-2xl font-black text-gray-950">
+              {selectedAlbumType.label}
+            </h2>
+            <p className="mt-2 text-gray-600">{projectNextAdvice}</p>
+          </div>
+
+          <Link
+            href="/gallery"
+            className="rounded-2xl bg-purple-100 px-5 py-3 text-center text-sm font-black text-purple-700"
+          >
+            Gérer mes photos
+          </Link>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-4">
+          <div className="rounded-2xl bg-purple-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-purple-700">
+              Format
+            </p>
+            <p className="mt-2 text-sm font-black text-gray-900">
+              {projectFormatLabel}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-gray-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
+              Objectif
+            </p>
+            <p className="mt-2 text-sm font-black text-gray-900">
+              {projectPhotoTarget}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-gray-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
+              Photos choisies
+            </p>
+            <p className="mt-2 text-2xl font-black text-gray-950">
+              {selectedProjectPhotoIds.length}
+            </p>
+          </div>
+          <div className="rounded-2xl bg-gray-50 p-4">
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
+              Sans filigrane
+            </p>
+            <p className="mt-2 text-2xl font-black text-purple-700">
+              {unlockedProjectPhotoCount}/{selectedProjectPhotoIds.length}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${
+            canExportProject ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-900"
+          }`}
+        >
+          {canExportProject
+            ? "Export final prêt : les photos sélectionnées sont débloquées sans filigrane."
+            : exportBlockReason}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-[#f4ecff] via-white to-[#ffeaf6] text-black">
       <SiteNav />
@@ -1688,127 +2049,6 @@ export default function AlbumPage() {
           }`}
         >
           <div className="space-y-8">
-            <div className="rounded-[2rem] border border-purple-100 bg-gradient-to-br from-purple-100 via-white to-pink-100 p-6 shadow-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
-                    Progression
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black text-gray-950">
-                    {completedStepsCount}/3 étape(s) complétée(s)
-                  </h2>
-                  <p className="mt-2 text-gray-600">
-                    Avancez dans l’ordre pour composer un aperçu clair avant l’export.
-                  </p>
-                </div>
-
-                <div className="flex w-full flex-wrap gap-3 sm:w-auto sm:justify-end">
-                  {progressLabels.map((label, index) => (
-                    <span
-                      key={label}
-                      className={`min-w-[128px] rounded-2xl px-5 py-3 text-center text-sm font-black shadow-sm ${
-                        completedSteps[index]
-                          ? "bg-purple-600 text-white"
-                          : "bg-white text-gray-500"
-                      }`}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={saveCurrentAlbum}
-                    disabled={savingAlbum || loading}
-                    className="min-w-[160px] rounded-2xl bg-black px-5 py-3 text-center text-sm font-black text-white shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {savingAlbum ? "Sauvegarde..." : savedAlbumId ? "Mettre à jour" : "Sauvegarder"}
-                  </button>
-                </div>
-              </div>
-
-              {(saveMessage || saveError) && (
-                <div
-                  className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${
-                    saveError
-                      ? "bg-red-50 text-red-700"
-                      : "bg-white/80 text-purple-700"
-                  }`}
-                >
-                  {saveError || saveMessage}
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-[2rem] border border-white/60 bg-white/85 p-6 shadow-sm backdrop-blur-xl">
-              <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <p className="text-sm font-black uppercase tracking-[0.18em] text-purple-700">
-                    Résumé du projet
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black text-gray-950">
-                    {selectedAlbumType.label}
-                  </h2>
-                  <p className="mt-2 text-gray-600">
-                    {projectNextAdvice}
-                  </p>
-                </div>
-
-                <Link
-                  href="/gallery"
-                  className="rounded-2xl bg-purple-100 px-5 py-3 text-center text-sm font-black text-purple-700"
-                >
-                  Gérer mes photos
-                </Link>
-              </div>
-
-              <div className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-2xl bg-purple-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-purple-700">
-                    Format
-                  </p>
-                  <p className="mt-2 text-sm font-black text-gray-900">
-                    {projectFormatLabel}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
-                    Objectif
-                  </p>
-                  <p className="mt-2 text-sm font-black text-gray-900">
-                    {projectPhotoTarget}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
-                    Photos choisies
-                  </p>
-                  <p className="mt-2 text-2xl font-black text-gray-950">
-                    {selectedProjectPhotoIds.length}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-gray-50 p-4">
-                  <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-500">
-                    Sans filigrane
-                  </p>
-                  <p className="mt-2 text-2xl font-black text-purple-700">
-                    {unlockedProjectPhotoCount}/{selectedProjectPhotoIds.length}
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className={`mt-4 rounded-2xl px-4 py-3 text-sm font-bold ${
-                  canExportProject
-                    ? "bg-green-50 text-green-700"
-                    : "bg-amber-50 text-amber-900"
-                }`}
-              >
-                {canExportProject
-                  ? "Export final prêt : les photos sélectionnées sont débloquées sans filigrane."
-                  : exportBlockReason}
-              </div>
-            </div>
-
             <section className="bg-white/80 backdrop-blur-xl rounded-[2rem] p-6 shadow-sm border border-white/60">
               <p className="text-sm font-black text-purple-700 mb-2">Étape 1</p>
               <h2 className="text-2xl font-black mb-2">Choisir votre création</h2>
@@ -2613,10 +2853,10 @@ export default function AlbumPage() {
                           <div className="mb-3 flex flex-col gap-1">
                             <p className="text-sm font-bold text-gray-600">Mise en page</p>
                             <p className="text-xs font-semibold text-gray-400">
-                              Avec {page.photosPerPage} photo{page.photosPerPage > 1 ? "s" : ""}, le mode Auto propose : {getAutoLayoutLabel(page.photosPerPage)}.
+                              Auto choisit {getAutoLayoutLabel(page.photosPerPage).toLowerCase()} et privilégie un rendu rempli, plus naturel pour l’impression.
                             </p>
                           </div>
-                          <div className="grid gap-3 sm:grid-cols-3">
+                          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             {(() => {
                               const visibleLayout =
                                 isPageLayoutAvailable(page.layout, page.photosPerPage)
@@ -2627,21 +2867,21 @@ export default function AlbumPage() {
                               .filter((option) =>
                                 isPageLayoutAvailable(option.id, page.photosPerPage)
                               )
-                              .map((option) => (
-                              <button
-                                key={`${page.id}-layout-${option.id}`}
-                                type="button"
-                                onClick={() => updatePageLayout(pageIndex, option.id)}
-                                className={`min-h-[76px] rounded-2xl border px-4 py-3 text-left ${
-                                  visibleLayout === option.id
-                                    ? "border-purple-500 bg-purple-50 text-purple-700"
-                                    : "border-gray-100 bg-white text-gray-600"
-                                }`}
-                              >
-                                <span className="block whitespace-nowrap text-sm font-black">{option.label}</span>
-                                <span className="mt-1 block text-xs font-semibold">{option.detail}</span>
-                              </button>
-                              ));
+                                .map((option) => (
+                                  <button
+                                    key={`${page.id}-layout-${option.id}`}
+                                    type="button"
+                                    onClick={() => updatePageLayout(pageIndex, option.id)}
+                                    className={`min-h-[76px] rounded-2xl border px-4 py-3 text-left ${
+                                      visibleLayout === option.id
+                                        ? "border-purple-500 bg-purple-50 text-purple-700"
+                                        : "border-gray-100 bg-white text-gray-600"
+                                    }`}
+                                  >
+                                    <span className="block whitespace-nowrap text-sm font-black">{option.label}</span>
+                                    <span className="mt-1 block text-xs font-semibold">{option.detail}</span>
+                                  </button>
+                                ));
                             })()}
                           </div>
                         </div>
@@ -2858,12 +3098,15 @@ export default function AlbumPage() {
                         <p className="mb-3 text-sm font-black text-gray-500">
                           Aperçu de la page au format final
                         </p>
-                        <div className="overflow-x-auto pb-2">
-                          {renderPagePreview(
-                            page,
-                            pageIndex,
-                            "w-[560px] max-w-none shrink-0"
-                          )}
+                        <div className="overflow-x-auto rounded-2xl bg-white p-4 pb-2 shadow-sm">
+                          <div className="h-[560px] w-[560px] max-w-none shrink-0 overflow-hidden">
+                            <div
+                              className="origin-top-left"
+                              style={{ transform: "scale(0.7)" }}
+                            >
+                              {renderPrintPageExport(page)}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2875,6 +3118,11 @@ export default function AlbumPage() {
 
               </>
             )}
+
+            <div className="space-y-6">
+              {renderProgressCard()}
+              {renderProjectSummaryCard()}
+            </div>
           </div>
 
           <aside className="lg:sticky lg:top-28">
@@ -3061,12 +3309,12 @@ export default function AlbumPage() {
                               );
                             }
 
-                            return (
-                              <div key={slot.page.id}>
-                                {renderPagePreview(slot.page, slot.index)}
-                              </div>
-                            );
-                          })}
+                          return (
+                            <div key={slot.page.id}>
+                              {renderScaledPrintPagePreview(slot.page)}
+                            </div>
+                          );
+                        })}
 
                           {spread.length === 1 && (
                             <div className={`min-h-[260px] rounded-2xl ${selectedTheme.pageClass} p-3 shadow-inner`}>
@@ -3186,7 +3434,7 @@ export default function AlbumPage() {
         ) : (
           <div className="mx-auto grid justify-items-center gap-8">
             <div className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}>
-              {renderCoverPreview(getAlbumPdfPreviewClass())}
+              {renderCoverPreview(getAlbumPdfPreviewClass(), true)}
             </div>
 
             {pages.map((page, pageIndex) => (
@@ -3194,11 +3442,7 @@ export default function AlbumPage() {
                 key={`pdf-page-${page.id}`}
                 className={`pdf-page pdf-page-album ${getAlbumPdfPageClass()}`}
               >
-                {renderPagePreview(
-                  page,
-                  pageIndex,
-                  getAlbumPdfPreviewClass()
-                )}
+                {renderPrintPageExport(page)}
               </div>
             ))}
           </div>
@@ -3241,12 +3485,7 @@ export default function AlbumPage() {
                   key={`export-page-${page.id}`}
                   data-export-name={`${String(pageIndex + 2).padStart(2, "0")}-page-${pageIndex + 1}-${getSelectedPagePhotoIds(page).length}-sur-${page.photosPerPage}-photos.png`}
                 >
-                  {renderPagePreview(
-                    page,
-                    pageIndex,
-                    getAlbumImageExportPageClass(),
-                    true
-                  )}
+                  {renderPrintPageExport(page)}
                 </div>
               ))}
 
