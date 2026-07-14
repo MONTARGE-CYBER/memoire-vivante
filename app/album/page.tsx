@@ -9,6 +9,8 @@ import SiteFooter from "@/components/SiteFooter";
 import SiteNav from "@/components/SiteNav";
 import WatermarkedImage from "@/components/WatermarkedImage";
 import { supabase } from "@/lib/supabase";
+import { albumThemes, normalizeAlbumThemeId, type AlbumTheme } from "./albumThemes";
+import { normalizeFamilyBook } from "./familyBook";
 
 type Restoration = {
   id: number;
@@ -52,6 +54,9 @@ type CalendarMonthConfig = {
 
 type AlbumSaveConfig = {
   albumType: string;
+  albumOrnament: string;
+  albumPhotoStyle: string;
+  albumTypography: string;
   calendarMonths: CalendarMonthConfig[];
   calendarPosterCaption: string;
   calendarPosterDates: string;
@@ -94,72 +99,145 @@ const albumFormats = [
   { id: "square-xl", label: "Carré XL 30 x 30", detail: "Grand format carré premium", previewClass: "aspect-square" },
 ];
 
-const albumThemes = [
-  {
-    id: "heritage",
-    label: "Héritage",
-    detail: "Ivoire, dorure légère, intemporel",
-    previewClass: "bg-[#f7f1e6]",
-    textClass: "text-[#6b4c24]",
-    borderClass: "border-[#dcc9a8]",
-    coverClass:
-      "bg-[#f8f5ef] [background-image:linear-gradient(135deg,rgba(255,255,255,0.72)_0%,rgba(255,255,255,0)_45%),linear-gradient(0deg,rgba(121,86,42,0.06)_1px,transparent_1px)] [background-size:100%_100%,18px_18px]",
-    coverBorderClass: "border-[#d8c5a5]",
-    coverTitleClass: "text-[#2f241a]",
-    coverTextClass: "text-[#6f5b45]",
-    pageClass: "bg-[#fffaf1]",
-    spreadClass: "bg-[#d8c8b7]",
-    noteClass: "bg-[#f4eadb] text-[#705d48]",
-    photoFrameClass: "border-[6px] border-white bg-white shadow-md",
-  },
-  {
-    id: "atelier",
-    label: "Atelier",
-    detail: "Carnet de voyage, papier chaud",
-    previewClass: "bg-[#f3eadc]",
-    textClass: "text-[#8a5a34]",
-    borderClass: "border-[#dfc5a5]",
-    coverClass:
-      "bg-[#f2e4d0] [background-image:linear-gradient(135deg,rgba(255,255,255,0.48)_0%,rgba(255,255,255,0)_42%),linear-gradient(0deg,rgba(112,76,42,0.08)_1px,transparent_1px)] [background-size:100%_100%,20px_20px]",
-    coverBorderClass: "border-[#cfb18c]",
-    coverTitleClass: "text-[#382719]",
-    coverTextClass: "text-[#795a3e]",
-    pageClass: "bg-[#fff7ea]",
-    spreadClass: "bg-[#d4b996]",
-    noteClass: "bg-[#f2e4d0] text-[#755238]",
-    photoFrameClass: "border-[6px] border-[#fffaf2] bg-[#fffaf2] shadow-md",
-  },
-  {
-    id: "contemporary",
-    label: "Contemporain",
-    detail: "Blanc, minimaliste, photos larges",
-    previewClass: "bg-[#f4f5f8]",
-    textClass: "text-[#4f46e5]",
-    borderClass: "border-[#d9ddf2]",
-    coverClass:
-      "bg-white [background-image:linear-gradient(135deg,rgba(79,70,229,0.07)_0%,rgba(236,72,153,0.05)_35%,rgba(255,255,255,0)_70%)]",
-    coverBorderClass: "border-[#e4e7f4]",
-    coverTitleClass: "text-[#111827]",
-    coverTextClass: "text-[#4b5563]",
-    pageClass: "bg-white",
-    spreadClass: "bg-[#e8ebf2]",
-    noteClass: "bg-[#f6f7fb] text-[#4b5563]",
-    photoFrameClass: "border border-[#edf0f7] bg-white shadow-sm",
-  },
-];
-
-function normalizeAlbumThemeId(themeId: string) {
-  if (themeId === "classic" || themeId === "vintage") return "atelier";
-  if (themeId === "gift" || themeId === "prune") return "contemporary";
-  if (themeId === "ivoire") return "heritage";
-  return themeId;
-}
-
 const pageStyleOptions = [
   { id: "classic", label: "Classique", detail: "Marges propres" },
   { id: "print", label: "Tirage photo", detail: "Bord blanc" },
   { id: "immersive", label: "Immersif", detail: "Photos larges" },
 ];
+
+const albumTypographyOptions = [
+  {
+    id: "timeless",
+    label: "Intemporelle",
+    detail: "Serif élégante, lecture douce",
+    titleClass: "",
+    bodyClass: "",
+    captionClass: "",
+  },
+  {
+    id: "edition",
+    label: "Édition",
+    detail: "Titres serif, légendes élégantes",
+    titleClass: "font-serif tracking-[0.01em]",
+    bodyClass: "font-serif",
+    captionClass: "font-serif italic",
+  },
+  {
+    id: "warm",
+    label: "Chaleureuse",
+    detail: "Carnet familial, ton sensible",
+    titleClass: "font-serif tracking-[0.005em]",
+    bodyClass: "font-sans",
+    captionClass: "font-sans",
+  },
+  {
+    id: "modern",
+    label: "Moderne",
+    detail: "Minimaliste et très lisible",
+    titleClass: "font-sans tracking-0",
+    bodyClass: "font-sans",
+    captionClass: "font-sans",
+  },
+  {
+    id: "minimal",
+    label: "Épurée",
+    detail: "Sobre, nette, contemporaine",
+    titleClass: "font-sans tracking-0",
+    bodyClass: "font-sans",
+    captionClass: "font-sans",
+  },
+];
+
+const albumOrnamentOptions = [
+  {
+    id: "clean",
+    label: "Épuré",
+    detail: "Rendu très épuré",
+  },
+  {
+    id: "fine",
+    label: "Filet classique",
+    detail: "Coins de beau livre",
+  },
+  {
+    id: "editorial",
+    label: "Géométrique",
+    detail: "Double filet premium",
+  },
+  {
+    id: "botanical",
+    label: "Botanique",
+    detail: "Décor léger de collection",
+  },
+  {
+    id: "handline",
+    label: "Ligne manuscrite",
+    detail: "Trait discret de carnet",
+  },
+];
+
+const albumPhotoStyleOptions = [
+  {
+    id: "none",
+    label: "Sans cadre",
+    detail: "Photo pleine et minimale",
+    className: "shadow-sm",
+  },
+  {
+    id: "print",
+    label: "Tirage photo",
+    detail: "Bord blanc de livre photo",
+    className: "border-[8px] border-white bg-white shadow-md",
+  },
+  {
+    id: "collection",
+    label: "Cadre de collection",
+    detail: "Style recommandé",
+    className: "",
+  },
+  {
+    id: "paper",
+    label: "Papier collé",
+    detail: "Carnet de souvenirs",
+    className: "rotate-[-0.7deg] border-[8px] border-[#fffaf2] bg-[#fffaf2] shadow-md",
+  },
+];
+
+const albumCollectionDefaults = {
+  heritage: {
+    ornament: "fine",
+    photoStyle: "print",
+    typography: "timeless",
+  },
+  atelier: {
+    ornament: "botanical",
+    photoStyle: "paper",
+    typography: "warm",
+  },
+  contemporary: {
+    ornament: "clean",
+    photoStyle: "none",
+    typography: "modern",
+  },
+} as const;
+
+const albumCollectionCompatibility = {
+  heritage: {
+    ornaments: ["fine", "botanical", "clean"],
+    photoStyles: ["print", "collection"],
+    typography: ["timeless", "edition"],
+  },
+  atelier: {
+    ornaments: ["botanical", "clean", "handline"],
+    photoStyles: ["print", "paper"],
+    typography: ["warm", "timeless"],
+  },
+  contemporary: {
+    ornaments: ["clean", "editorial"],
+    photoStyles: ["none", "collection"],
+    typography: ["modern", "minimal"],
+  },
+} as const;
 
 const photosPerPageOptions = [1, 2, 3, 4];
 
@@ -432,23 +510,57 @@ function getPageExportImageClass(page: AlbumPageConfig, index: number) {
 
 function getPhotoStyleClass(
   pageStyle: string,
-  albumTheme: (typeof albumThemes)[number]
+  albumTheme: AlbumTheme,
+  photoStyleClass = ""
 ) {
-  if (pageStyle === "immersive") return "shadow-sm";
+  if (pageStyle === "immersive") return "shadow-none";
+  if (pageStyle === "classic") return "border border-black/5 bg-white/35 shadow-sm";
+  if (pageStyle === "print") return "border-[10px] border-white bg-white shadow-[0_12px_28px_rgba(54,40,24,0.16)]";
+  if (photoStyleClass) return photoStyleClass;
   return albumTheme.photoFrameClass;
+}
+
+function getPageNoteClass(pageStyle: string, albumTheme: AlbumTheme) {
+  if (pageStyle === "immersive") {
+    return `bg-white/55 text-[#3f3f46]`;
+  }
+
+  if (pageStyle === "classic") {
+    return `border border-black/5 bg-white/45 ${albumTheme.coverTextClass}`;
+  }
+
+  return `${albumTheme.noteClass} shadow-sm`;
+}
+
+function getPrintPagePaddingClass(pageStyle: string) {
+  if (pageStyle === "immersive") return "p-[22px]";
+  if (pageStyle === "classic") return "p-[40px]";
+  return "p-[52px]";
+}
+
+function getPrintPageNoteClass(pageStyle: string, albumTheme: AlbumTheme) {
+  if (pageStyle === "immersive") {
+    return `bg-white/50 text-[#3f3f46]`;
+  }
+
+  if (pageStyle === "classic") {
+    return `border border-black/5 bg-white/45 ${albumTheme.coverTextClass}`;
+  }
+
+  return `${albumTheme.noteClass} shadow-sm`;
 }
 
 function getInteriorPageClass(
   pageStyle: string,
-  albumTheme: (typeof albumThemes)[number]
+  albumTheme: AlbumTheme
 ) {
   if (pageStyle === "immersive") {
     return `relative min-h-[430px] rounded-2xl ${albumTheme.pageClass} p-2 shadow-inner`;
   }
   if (pageStyle === "print") {
-    return `relative min-h-[430px] rounded-2xl ${albumTheme.pageClass} p-4 shadow-inner`;
+    return `relative min-h-[430px] rounded-2xl ${albumTheme.pageClass} p-5 shadow-inner`;
   }
-  return `relative min-h-[430px] rounded-2xl ${albumTheme.pageClass} p-3 shadow-inner`;
+  return `relative min-h-[430px] rounded-2xl ${albumTheme.pageClass} p-4 shadow-inner`;
 }
 
 function getAlbumPdfPreviewClass() {
@@ -504,6 +616,10 @@ export default function AlbumPage() {
   const [coverPhotoFit, setCoverPhotoFit] = useState<CalendarPhotoFit>("cover");
   const [format, setFormat] = useState("square");
   const [theme, setTheme] = useState("heritage");
+  const [albumOrnament, setAlbumOrnament] = useState("fine");
+  const [albumPhotoStyle, setAlbumPhotoStyle] = useState("print");
+  const [albumTypography, setAlbumTypography] = useState("timeless");
+  const [previewMode, setPreviewMode] = useState<"flat" | "book" | "print">("book");
   const [calendarProduct, setCalendarProduct] = useState("monthly");
   const [calendarTheme, setCalendarTheme] = useState("family");
   const [calendarYear, setCalendarYear] = useState(getDefaultCalendarYear);
@@ -521,7 +637,7 @@ export default function AlbumPage() {
     "Anniversaires, mariages, fêtes de famille et moments à ne pas oublier."
   );
   const [pageStyle, setPageStyle] = useState("print");
-  const [showPrintGuides, setShowPrintGuides] = useState(true);
+  const [showPrintGuides, setShowPrintGuides] = useState(false);
   const [title, setTitle] = useState("Notre album souvenir");
   const [coverText, setCoverText] = useState(
     "Un album de famille créé à partir de photos restaurées, à offrir et à transmettre."
@@ -540,6 +656,17 @@ export default function AlbumPage() {
   const selectedTheme =
     albumThemes.find((albumTheme) => albumTheme.id === normalizeAlbumThemeId(theme)) ??
     albumThemes[0];
+  const selectedThemeId = selectedTheme.id;
+  const compatibleAlbumOptions = albumCollectionCompatibility[selectedThemeId];
+  const selectedAlbumTypography =
+    albumTypographyOptions.find((option) => option.id === albumTypography) ??
+    albumTypographyOptions[0];
+  const selectedAlbumOrnament =
+    albumOrnamentOptions.find((option) => option.id === albumOrnament) ??
+    albumOrnamentOptions[0];
+  const selectedAlbumPhotoStyle =
+    albumPhotoStyleOptions.find((option) => option.id === albumPhotoStyle) ??
+    albumPhotoStyleOptions[0];
   const selectedFormat =
     albumFormats.find((albumFormat) => albumFormat.id === format) ?? albumFormats[0];
   const selectedAlbumType =
@@ -644,15 +771,38 @@ export default function AlbumPage() {
       : hasLockedProjectPhotos
         ? "Débloquez les photos finales avant impression."
         : "Prêt pour sauvegarde et export.";
+  const needsFinalEvenPage = pages.length > 1 && pages.length % 2 === 1;
   const spreads = useMemo(() => {
-    const firstSpread = [{ kind: "verso" as const }, { kind: "page" as const, page: pages[0], index: 0 }];
-    const rest = pages.slice(1).map((page, index) => ({
-      kind: "page" as const,
+    type AlbumSpreadSlot =
+      | { kind: "back-cover" }
+      | { kind: "blank" }
+      | { kind: "inside-back-cover" }
+      | { kind: "page"; index: number; page: AlbumPageConfig }
+      | { kind: "verso" };
+
+    const firstSpread: AlbumSpreadSlot[] = [{ kind: "verso" }, { kind: "page", page: pages[0], index: 0 }];
+    const restPages = pages.slice(1);
+    const rest: AlbumSpreadSlot[] = restPages.map((page, index) => ({
+      kind: "page",
       page,
       index: index + 1,
     }));
+    const pageSpreads: AlbumSpreadSlot[][] = chunkArray(rest, 2);
 
-    return [firstSpread, ...chunkArray(rest, 2)];
+    if (pages.length > 1 && pages.length % 2 === 0) {
+      const lastSpread = pageSpreads[pageSpreads.length - 1];
+
+      if (lastSpread) {
+        pageSpreads[pageSpreads.length - 1] = [
+          lastSpread[0],
+          { kind: "inside-back-cover" as const },
+        ];
+      }
+    } else if (pages.length > 1) {
+      pageSpreads.push([{ kind: "blank" as const }, { kind: "inside-back-cover" as const }]);
+    }
+
+    return [firstSpread, ...pageSpreads];
   }, [pages]);
   const photoUsage = useMemo(() => {
     const usage = new Map<number, { pageIndex: number; slotIndex: number }>();
@@ -732,6 +882,9 @@ export default function AlbumPage() {
   function getAlbumSaveConfig(): AlbumSaveConfig {
     return {
       albumType,
+      albumOrnament,
+      albumPhotoStyle,
+      albumTypography,
       calendarMonths,
       calendarPosterCaption,
       calendarPosterDates,
@@ -757,19 +910,86 @@ export default function AlbumPage() {
     };
   }
 
+  const familyBook = useMemo(
+    () =>
+      normalizeFamilyBook({
+        config: {
+          albumOrnament,
+          albumPhotoStyle,
+          albumTypography,
+          coverText,
+          dedication,
+          format,
+          pages,
+          theme: selectedTheme.id,
+          title,
+        },
+        id: savedAlbumId,
+        ownerId: userId,
+      }),
+    [
+      albumOrnament,
+      albumPhotoStyle,
+      albumTypography,
+      coverText,
+      dedication,
+      format,
+      pages,
+      savedAlbumId,
+      selectedTheme.id,
+      title,
+      userId,
+    ]
+  );
+
   function applySavedAlbumConfig(config: Partial<AlbumSaveConfig>) {
     if (typeof config.albumType === "string") setAlbumType(config.albumType);
+    if (typeof config.albumOrnament === "string") {
+      setAlbumOrnament(
+        albumOrnamentOptions.some((option) => option.id === config.albumOrnament)
+          ? config.albumOrnament
+          : "fine"
+      );
+    }
+    if (typeof config.albumPhotoStyle === "string") {
+      setAlbumPhotoStyle(
+        albumPhotoStyleOptions.some((option) => option.id === config.albumPhotoStyle)
+          ? config.albumPhotoStyle
+          : "print"
+      );
+    }
+    if (typeof config.albumTypography === "string") {
+      setAlbumTypography(
+        albumTypographyOptions.some((option) => option.id === config.albumTypography)
+          ? config.albumTypography
+          : "timeless"
+      );
+    }
     if (typeof config.coverPhotoId === "number" || config.coverPhotoId === null) {
       setCoverPhotoId(config.coverPhotoId);
     }
     if (config.coverPhotoFit) setCoverPhotoFit(config.coverPhotoFit);
     if (typeof config.coverBackground === "string" && typeof config.theme !== "string") {
-      setTheme(config.coverBackground);
+      const normalizedTheme = normalizeAlbumThemeId(config.coverBackground);
+      const defaults = albumCollectionDefaults[normalizedTheme];
+
+      setTheme(normalizedTheme);
+      if (typeof config.albumOrnament !== "string") setAlbumOrnament(defaults.ornament);
+      if (typeof config.albumPhotoStyle !== "string") setAlbumPhotoStyle(defaults.photoStyle);
+      if (typeof config.albumTypography !== "string") setAlbumTypography(defaults.typography);
     }
     if (typeof config.format === "string") {
       setFormat(albumFormats.some((albumFormat) => albumFormat.id === config.format) ? config.format : "square");
     }
-    if (typeof config.theme === "string") setTheme(config.theme);
+    if (typeof config.theme === "string") {
+      const normalizedTheme = normalizeAlbumThemeId(config.theme);
+      const defaults = albumCollectionDefaults[normalizedTheme];
+
+      setTheme(normalizedTheme);
+      if (typeof config.albumOrnament !== "string") setAlbumOrnament(defaults.ornament);
+      if (typeof config.albumPhotoStyle !== "string") setAlbumPhotoStyle(defaults.photoStyle);
+      if (typeof config.albumTypography !== "string") setAlbumTypography(defaults.typography);
+    }
     if (typeof config.calendarProduct === "string") setCalendarProduct(config.calendarProduct);
     if (typeof config.calendarTheme === "string") setCalendarTheme(config.calendarTheme);
     if (typeof config.calendarYear === "number") setCalendarYear(config.calendarYear);
@@ -788,7 +1008,8 @@ export default function AlbumPage() {
     }
     if (typeof config.pageStyle === "string") setPageStyle(config.pageStyle);
     if (typeof config.showPrintGuides === "boolean") {
-      setShowPrintGuides(config.showPrintGuides);
+      setShowPrintGuides(false);
+      setPreviewMode("book");
     }
     if (typeof config.title === "string") setTitle(config.title);
     if (typeof config.coverText === "string") setCoverText(config.coverText);
@@ -1290,6 +1511,179 @@ export default function AlbumPage() {
     }));
   }
 
+  function renderAlbumThemeTexture(albumTheme: AlbumTheme) {
+    if (!albumTheme.texture.overlayClass) return null;
+
+    return (
+      <div
+        className={`pointer-events-none absolute inset-0 ${albumTheme.texture.overlayClass}`}
+        aria-hidden="true"
+      />
+    );
+  }
+
+  function getAlbumTypographyClasses() {
+    if (selectedAlbumTypography.id === "timeless") {
+      return selectedTheme.typography;
+    }
+
+    return {
+      ...selectedTheme.typography,
+      bodyClass: selectedAlbumTypography.bodyClass,
+      captionClass: selectedAlbumTypography.captionClass,
+      titleClass: selectedAlbumTypography.titleClass,
+    };
+  }
+
+  function getAlbumPhotoFrameClass() {
+    if (selectedAlbumPhotoStyle.id === "collection") {
+      return selectedTheme.photoFrameClass;
+    }
+
+    return selectedAlbumPhotoStyle.className;
+  }
+
+  function applyAlbumCollection(nextThemeId: string) {
+    const nextTheme = normalizeAlbumThemeId(nextThemeId);
+    const defaults = albumCollectionDefaults[nextTheme];
+
+    setTheme(nextTheme);
+    setAlbumOrnament(defaults.ornament);
+    setAlbumPhotoStyle(defaults.photoStyle);
+    setAlbumTypography(defaults.typography);
+  }
+
+  function renderPreviewModeSwitch() {
+    return (
+      <div className="inline-grid rounded-full bg-white/80 p-1 text-xs font-black shadow-sm ring-1 ring-black/5 sm:grid-cols-3">
+        {[
+          { id: "flat", label: "Vue à plat" },
+          { id: "book", label: "Vue livre" },
+          { id: "print", label: "Repères d’impression" },
+        ].map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => {
+              const nextMode = option.id as "flat" | "book" | "print";
+
+              setPreviewMode(nextMode);
+              setShowPrintGuides(nextMode === "print");
+            }}
+            className={`rounded-full px-4 py-2 transition ${
+              previewMode === option.id
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-gray-500 hover:text-gray-950"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function renderPagePreviewModeSwitch() {
+    return (
+      <div className="inline-grid rounded-full bg-white/80 p-1 text-xs font-black shadow-sm ring-1 ring-black/5 sm:grid-cols-2">
+        {[
+          { id: "flat", label: "Vue de la page" },
+          { id: "book", label: "Vue livre" },
+        ].map((option) => (
+          <button
+            key={option.id}
+            type="button"
+            onClick={() => {
+              const nextMode = option.id as "flat" | "book";
+
+              setPreviewMode(nextMode);
+              setShowPrintGuides(false);
+            }}
+            className={`rounded-full px-4 py-2 transition ${
+              previewMode === option.id
+                ? "bg-gray-950 text-white shadow-sm"
+                : "text-gray-500 hover:text-gray-950"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  function renderAlbumThemeCorners(albumTheme: AlbumTheme) {
+    if (selectedAlbumOrnament.id === "clean") return null;
+
+    if (selectedAlbumOrnament.id === "fine") {
+      return (
+        <>
+          <span
+            className="pointer-events-none absolute left-[20px] top-[20px] h-14 w-14 border-l-2 border-t-2 border-[#b89453]/50"
+            aria-hidden="true"
+          />
+          <span
+            className="pointer-events-none absolute bottom-[20px] right-[20px] h-14 w-14 rotate-180 border-l-2 border-t-2 border-[#b89453]/50"
+            aria-hidden="true"
+          />
+        </>
+      );
+    }
+
+    if (selectedAlbumOrnament.id === "editorial") {
+      return (
+        <>
+          <span
+            className="pointer-events-none absolute inset-[20px] rounded-[0.75rem] border border-[#b89453]/35"
+            aria-hidden="true"
+          />
+          <span
+            className="pointer-events-none absolute inset-[30px] rounded-[0.55rem] border border-white/55"
+            aria-hidden="true"
+          />
+          <span
+            className="pointer-events-none absolute left-[34px] top-[34px] h-2 w-16 bg-[#b89453]/45"
+            aria-hidden="true"
+          />
+          <span
+            className="pointer-events-none absolute bottom-[34px] right-[34px] h-2 w-16 bg-[#b89453]/45"
+            aria-hidden="true"
+          />
+        </>
+      );
+    }
+
+    if (selectedAlbumOrnament.id === "handline") {
+      return (
+        <>
+          <span
+            className="pointer-events-none absolute left-[28px] top-[30px] h-px w-20 -rotate-2 bg-[#7f8a5f]/45"
+            aria-hidden="true"
+          />
+          <span
+            className="pointer-events-none absolute bottom-[30px] right-[28px] h-px w-20 -rotate-2 bg-[#7f8a5f]/45"
+            aria-hidden="true"
+          />
+        </>
+      );
+    }
+
+    if (albumTheme.decorations.cornerOrnament === "none") return null;
+
+    return (
+      <>
+        <span
+          className={`pointer-events-none absolute left-[22px] top-[22px] h-10 w-10 border-l border-t ${albumTheme.decorations.cornerClass}`}
+          aria-hidden="true"
+        />
+        <span
+          className={`pointer-events-none absolute bottom-[22px] right-[22px] h-10 w-10 rotate-180 border-l border-t ${albumTheme.decorations.cornerClass}`}
+          aria-hidden="true"
+        />
+      </>
+    );
+  }
+
   function renderRestoredPhoto(
     photo: Restoration,
     alt: string,
@@ -1332,6 +1726,7 @@ export default function AlbumPage() {
       typeof photoId === "number" ? getPhotoById(items, photoId) : null
     );
     const selectedPhotoCount = pagePhotos.filter(Boolean).length;
+    const photoFrameClass = getAlbumPhotoFrameClass();
 
     if (cleanExport) {
       return (
@@ -1343,7 +1738,7 @@ export default function AlbumPage() {
               photo ? (
                 <div
                   key={`${page.id}-export-${photo.id}-${photoIndex}`}
-                  className={`${getPageExportImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)} min-h-0 overflow-hidden`}
+                  className={`${getPageExportImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme, photoFrameClass)} min-h-0 overflow-hidden`}
                 >
                   {renderRestoredPhoto(
                     photo,
@@ -1362,7 +1757,7 @@ export default function AlbumPage() {
           </div>
 
           {page.note && (
-            <p className={`mt-4 shrink-0 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
+            <p className={`mt-4 shrink-0 rounded-xl px-5 py-4 text-lg font-semibold leading-relaxed ${getPageNoteClass(pageStyle, selectedTheme)}`}>
               {page.note}
             </p>
           )}
@@ -1385,7 +1780,7 @@ export default function AlbumPage() {
             photo ? (
               <div
                 key={`${page.id}-${photo.id}-${photoIndex}`}
-                className={`${getPageImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme)}`}
+                className={`${getPageImageClass(page, photoIndex)} ${getPhotoStyleClass(pageStyle, selectedTheme, photoFrameClass)}`}
               >
                 {renderRestoredPhoto(
                   photo,
@@ -1404,7 +1799,7 @@ export default function AlbumPage() {
         </div>
 
         {(page.note || selectedPhotoCount === 0) && (
-          <p className={`mt-3 rounded-xl px-3 py-2 text-xs font-semibold leading-relaxed ${selectedTheme.noteClass}`}>
+          <p className={`mt-3 rounded-xl px-3 py-2 text-xs font-semibold leading-relaxed ${getPageNoteClass(pageStyle, selectedTheme)}`}>
             {page.note || "Emplacement prévu pour une date, un lieu ou une anecdote familiale."}
           </p>
         )}
@@ -1442,16 +1837,20 @@ export default function AlbumPage() {
       typeof photoId === "number" ? getPhotoById(items, photoId) : null
     );
     const note = page.note.trim();
+    const typography = getAlbumTypographyClasses();
+    const photoFrameClass = getAlbumPhotoFrameClass();
 
     return (
-      <div className={`mx-auto h-[800px] w-[800px] max-w-none shrink-0 ${selectedTheme.pageClass}`}>
-        <div className="flex h-full flex-col overflow-hidden p-[36px]">
+      <div className={`relative mx-auto h-[800px] w-[800px] max-w-none shrink-0 overflow-hidden ${selectedTheme.pageClass}`}>
+        {renderAlbumThemeTexture(selectedTheme)}
+        {renderAlbumThemeCorners(selectedTheme)}
+        <div className={`relative z-10 flex h-full flex-col overflow-hidden ${getPrintPagePaddingClass(pageStyle)} ${typography.bodyClass}`}>
           <div className={getPrintExportGridClass(page)}>
             {pagePhotos.map((photo, photoIndex) =>
               photo ? (
                 <div
                   key={`${page.id}-print-${photo.id}-${photoIndex}`}
-                  className={`${getPrintExportImageClass(page, photoIndex)} min-h-0 overflow-hidden rounded-xl ${selectedTheme.pageClass} shadow-sm`}
+                  className={`${getPrintExportImageClass(page, photoIndex)} min-h-0 overflow-hidden rounded-xl ${getPhotoStyleClass(pageStyle, selectedTheme, photoFrameClass)}`}
                 >
                   {renderRestoredPhoto(
                     photo,
@@ -1470,7 +1869,7 @@ export default function AlbumPage() {
           </div>
 
           {note ? (
-            <p className={`mt-[18px] h-[58px] shrink-0 overflow-hidden rounded-xl px-5 py-3 text-lg font-black leading-tight ${selectedTheme.noteClass}`}>
+            <p className={`mt-[18px] h-[58px] shrink-0 overflow-hidden rounded-xl px-5 py-3 text-lg font-black leading-tight ${typography.captionClass} ${getPrintPageNoteClass(pageStyle, selectedTheme)}`}>
               {note}
             </p>
           ) : (
@@ -1491,6 +1890,125 @@ export default function AlbumPage() {
           style={{ transform: "scale(0.325)" }}
         >
           {renderPrintPageExport(page)}
+        </div>
+      </div>
+    );
+  }
+
+  function renderMiniPrintPage(page: AlbumPageConfig, scale = 0.4) {
+    const size = 800 * scale;
+
+    return (
+      <div
+        className="overflow-hidden"
+        style={{ height: size, width: size }}
+      >
+        <div
+          className="h-[800px] w-[800px] origin-top-left max-w-none shrink-0"
+          style={{ transform: `scale(${scale})` }}
+        >
+          {renderPrintPageExport(page)}
+        </div>
+      </div>
+    );
+  }
+
+  function renderBlankBookPage(label: string) {
+    return (
+      <div className={`relative flex h-72 w-72 items-center justify-center overflow-hidden ${selectedTheme.pageClass}`}>
+        {renderAlbumThemeTexture(selectedTheme)}
+        <div className="relative z-10 px-8 text-center">
+          <p className={`text-xs font-black uppercase tracking-[0.14em] ${selectedTheme.textClass}`}>
+            {label}
+          </p>
+          <p className={`mt-3 text-sm font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
+            Page laissée libre pour conserver un rythme de lecture élégant.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  function renderBackCoverPage() {
+    return (
+      <div className={`relative flex h-72 w-72 items-end justify-center overflow-hidden px-8 pb-8 text-center ${selectedTheme.coverClass}`}>
+        {renderAlbumThemeTexture(selectedTheme)}
+        <div className="absolute inset-x-10 top-10 h-px bg-white/45" />
+        <div className={`relative z-10 ${selectedTheme.coverTextClass}`}>
+          <p className="text-xs font-black uppercase tracking-[0.14em]">
+            Réalisé avec
+          </p>
+          <p className="mt-1 text-lg font-black leading-tight">
+            Mémoire Vivante
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  function renderBookCoverPresentation(className = "") {
+    const coverClassName = className || "mx-auto w-[680px] max-w-none shrink-0";
+
+    if (previewMode !== "book") {
+      return renderCoverPreview(coverClassName, previewMode === "flat");
+    }
+
+    return (
+      <div className={`mx-auto max-w-[760px] ${className}`}>
+        <div className="relative px-6 pb-8 pt-4 [perspective:1400px]">
+          <div className="absolute bottom-1 left-[18%] right-[14%] h-12 rounded-full bg-black/25 blur-2xl" />
+          <div
+            className="relative mx-auto w-[640px] max-w-none origin-center rounded-[1.45rem] [transform-style:preserve-3d]"
+            style={{ transform: "rotateY(-6deg) rotateX(2deg)" }}
+          >
+            <div className="absolute -right-5 bottom-4 top-5 w-8 rounded-r-[1.15rem] bg-gradient-to-r from-[#f9f7ef] via-[#d9d0be] to-[#a99a84] shadow-lg" />
+            <div className="absolute -right-2 bottom-7 top-8 w-4 rounded-r-xl bg-[repeating-linear-gradient(to_bottom,#fffdf7_0,#fffdf7_3px,#d7cfbf_4px)] opacity-80" />
+            <div className="absolute -left-5 bottom-2 top-2 w-8 rounded-l-[1.3rem] bg-gradient-to-r from-black/25 via-black/10 to-transparent" />
+            <div className="relative overflow-hidden rounded-[1.35rem] shadow-[0_34px_70px_rgba(54,40,24,0.34)] ring-1 ring-black/10">
+              <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-br from-white/22 via-transparent to-black/10" />
+              {renderCoverPreview("w-[640px] max-w-none shrink-0", true)}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderOpenBookPresentation(page: AlbumPageConfig, pageIndex: number) {
+    if (previewMode !== "book") {
+      return (
+        <div className="h-[640px] w-[640px] max-w-none shrink-0 overflow-hidden">
+          <div
+            className="origin-top-left"
+            style={{ transform: "scale(0.8)" }}
+          >
+            {renderPrintPageExport(page)}
+          </div>
+        </div>
+      );
+    }
+
+    const isFirstPage = pageIndex === 0;
+    const isLeftPage = (pageIndex + 1) % 2 === 0;
+    const leftPage = isFirstPage ? null : isLeftPage ? page : pages[pageIndex - 1] ?? null;
+    const rightPage = isFirstPage ? page : isLeftPage ? pages[pageIndex + 1] ?? null : page;
+    const leftLabel = isFirstPage ? "Verso couverture" : "Page libre";
+    const rightLabel = isLeftPage ? "Page suivante" : "Page libre";
+
+    return (
+      <div className="relative mx-auto w-full max-w-[640px] px-4 pb-8 pt-3 [perspective:1600px]">
+        <div className="absolute bottom-4 left-[12%] right-[10%] h-12 rounded-full bg-black/20 blur-2xl" />
+        <div className="relative grid grid-cols-2 overflow-hidden rounded-[1.4rem] bg-[#d8c8b7] p-3 shadow-[0_30px_70px_rgba(58,43,28,0.25)] ring-1 ring-black/10">
+          <div className="absolute inset-y-5 left-1/2 z-20 w-8 -translate-x-1/2 bg-gradient-to-r from-black/18 via-white/30 to-black/16 blur-sm" />
+          <div className="absolute inset-y-4 left-1/2 z-30 w-px bg-black/25" />
+          <div className="relative overflow-hidden rounded-l-[1rem] bg-white shadow-inner">
+            <div className="absolute inset-y-0 right-0 z-10 w-10 bg-gradient-to-l from-black/12 to-transparent" />
+            {leftPage ? renderMiniPrintPage(leftPage, 0.36) : renderBlankBookPage(leftLabel)}
+          </div>
+          <div className="relative overflow-hidden rounded-r-[1rem] bg-white shadow-inner">
+            <div className="absolute inset-y-0 left-0 z-10 w-10 bg-gradient-to-r from-black/12 to-transparent" />
+            {rightPage ? renderMiniPrintPage(rightPage, 0.36) : renderBlankBookPage(rightLabel)}
+          </div>
         </div>
       </div>
     );
@@ -1841,6 +2359,9 @@ export default function AlbumPage() {
   }
 
   function renderCoverPreview(className = "", cleanExport = false) {
+    const typography = getAlbumTypographyClasses();
+    const photoFrameClass = getAlbumPhotoFrameClass();
+
     return (
       <div className={`relative ${className}`}>
         {!cleanExport && (
@@ -1850,22 +2371,24 @@ export default function AlbumPage() {
           </>
         )}
         <div className={`${selectedFormat.previewClass} relative min-h-[560px] overflow-hidden rounded-[1.25rem] border ${selectedTheme.coverBorderClass} ${selectedTheme.coverClass} p-5 sm:min-h-[620px] sm:p-7 shadow-[0_24px_60px_rgba(75,52,28,0.22)]`}>
+          {renderAlbumThemeTexture(selectedTheme)}
+          {renderAlbumThemeCorners(selectedTheme)}
           <div className="absolute inset-y-0 left-0 w-4 bg-black/10" />
           <div className="absolute inset-x-8 top-4 h-px bg-white/45" />
-          {showPrintGuides && !cleanExport && (
+          {previewMode === "print" && !cleanExport && (
             <div className="pointer-events-none absolute inset-6 z-20 rounded-[1rem] border border-dashed border-amber-700/35">
               <span className="absolute -top-3 left-4 rounded-full bg-white/80 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.14em] text-amber-800">
                 Zone sûre
               </span>
             </div>
           )}
-          <div className="relative z-10 flex min-h-[520px] flex-col items-center justify-center text-center sm:min-h-[570px]">
+          <div className={`relative z-10 flex min-h-[520px] flex-col items-center justify-center text-center sm:min-h-[570px] ${typography.bodyClass}`}>
             {!cleanExport && (
               <p className={`text-xs font-black uppercase tracking-[0.22em] ${selectedTheme.textClass}`}>
                 Couverture
               </p>
             )}
-            <h2 className={`mt-4 max-w-md text-2xl sm:text-3xl font-black leading-tight ${selectedTheme.coverTitleClass}`}>
+            <h2 className={`mt-4 max-w-md text-2xl sm:text-3xl font-black leading-tight ${typography.titleClass} ${selectedTheme.coverTitleClass}`}>
               {title || "Votre album souvenir"}
             </h2>
             <p className={`mt-3 max-w-md text-sm font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
@@ -1874,7 +2397,7 @@ export default function AlbumPage() {
 
             <div className="my-5 w-full max-w-[320px] sm:my-6">
               {coverPhoto ? (
-                <div className="rotate-[-1deg] rounded-[1.25rem] bg-white p-3 shadow-xl">
+                <div className={`rounded-[1.25rem] ${photoFrameClass || "bg-white p-3 shadow-xl"}`}>
                   {renderRestoredPhoto(
                     coverPhoto,
                     "Photo principale de couverture",
@@ -1889,7 +2412,8 @@ export default function AlbumPage() {
               )}
             </div>
 
-            <p className={`max-w-md text-sm font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
+            <div className={`mb-4 h-px w-20 ${selectedTheme.decorations.dividerClass}`} />
+            <p className={`max-w-md text-sm font-semibold leading-relaxed ${typography.captionClass} ${selectedTheme.coverTextClass}`}>
               {dedication}
             </p>
           </div>
@@ -2558,9 +3082,27 @@ export default function AlbumPage() {
               <h2 className="text-2xl font-black mb-5">Composer la couverture</h2>
               {renderAlbumJumpNav("album-cover-editor")}
 
-              <div className="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_620px] 2xl:items-start">
+              <div className="grid gap-6">
+                <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.38fr)_minmax(0,0.62fr)] xl:items-start">
                 <div>
-                  <div className="space-y-4">
+                  <div className="mb-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                    <p className="text-xs font-black uppercase tracking-[0.12em] text-gray-400">
+                      Style actuel
+                    </p>
+                    <div className="mt-3 grid gap-2 text-sm font-bold text-gray-600">
+                      <p>{selectedTheme.name}</p>
+                      <p>{selectedAlbumTypography.label} · {selectedAlbumPhotoStyle.label}</p>
+                      <p>{selectedAlbumOrnament.label}</p>
+                    </div>
+                  </div>
+
+                  <details className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm" open>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-gray-900">
+                      Identité du livre
+                      <span className="text-xs font-black text-purple-700 group-open:hidden">Ouvrir</span>
+                      <span className="hidden text-xs font-black text-gray-400 group-open:inline">Fermer</span>
+                    </summary>
+                    <div className="mt-4 space-y-4">
                     <label className="block rounded-2xl border border-purple-200 bg-purple-50/80 p-4 shadow-sm">
                       <span className="mb-2 flex items-center justify-between gap-3 text-sm font-black text-purple-800">
                         <span>Titre de couverture</span>
@@ -2606,29 +3148,190 @@ export default function AlbumPage() {
                         className="w-full resize-none rounded-2xl border border-purple-200 bg-white px-5 py-4 font-semibold outline-none focus:border-purple-500"
                       />
                     </label>
+                    </div>
+                  </details>
+
                   </div>
 
-                  <div className="mt-6">
-                    <p className="mb-3 text-sm font-bold text-gray-600">Thème de l’album</p>
-                    <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="grid gap-5 2xl:grid-cols-2">
+                  <details className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm" open>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-gray-900">
+                      Collection graphique
+                      <span className="text-xs font-black text-purple-700 group-open:hidden">Ouvrir</span>
+                      <span className="hidden text-xs font-black text-gray-400 group-open:inline">Fermer</span>
+                    </summary>
+                  <div className="mt-4">
+                    <div className="grid gap-3 sm:grid-cols-3 2xl:grid-cols-1">
                       {albumThemes.map((option) => (
                         <button
                           key={option.id}
                           type="button"
-                          onClick={() => setTheme(option.id)}
-                          className={`rounded-2xl border p-3 text-left transition ${
+                          onClick={() => applyAlbumCollection(option.id)}
+                          className={`relative rounded-2xl border p-3 text-left transition ${
                             selectedTheme.id === option.id
-                              ? `${option.borderClass} ${option.previewClass} ${option.textClass}`
+                              ? `${option.borderClass} ${option.previewClass} ${option.textClass} shadow-lg`
                               : "border-gray-100 bg-white text-gray-600"
                           }`}
                         >
-                          <span className={`mb-3 block h-16 rounded-xl border ${option.coverBorderClass} ${option.coverClass}`} />
-                          <span className="block font-black">{option.label}</span>
-                          <span className="block text-sm font-semibold">{option.detail}</span>
+                          {selectedTheme.id === option.id && (
+                            <span className="absolute right-3 top-3 rounded-full bg-gray-950 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.08em] text-white">
+                              Sélectionnée
+                            </span>
+                          )}
+                          <span className={`relative mb-3 block h-16 overflow-hidden rounded-xl border ${option.coverBorderClass} ${option.coverClass}`}>
+                            {renderAlbumThemeTexture(option)}
+                            <span className="absolute bottom-2 left-2 h-4 w-12 rounded-sm bg-white/75 shadow-sm" />
+                            <span className="absolute right-2 top-2 grid grid-cols-2 gap-1">
+                              {Object.values(option.colors).slice(0, 4).map((color) => (
+                                <span
+                                  key={`${option.id}-${color}`}
+                                  className="h-2.5 w-2.5 rounded-full ring-1 ring-black/5"
+                                  style={{ backgroundColor: color }}
+                                />
+                              ))}
+                            </span>
+                          </span>
+                          <span className="block text-base font-black leading-tight">
+                            {option.name}
+                          </span>
+                          <span className="mt-1 block text-xs font-semibold leading-snug">
+                            {option.description}
+                          </span>
+                          <span className="mt-2 block text-[11px] font-bold leading-snug opacity-75">
+                            {option.detail}
+                          </span>
                         </button>
                       ))}
                     </div>
                   </div>
+                  </details>
+
+                  <details className="group rounded-2xl border border-gray-100 bg-white p-4 shadow-sm" open>
+                    <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-black text-gray-900">
+                      Finitions de l’album
+                      <span className="text-xs font-black text-purple-700 group-open:hidden">Ouvrir</span>
+                      <span className="hidden text-xs font-black text-gray-400 group-open:inline">Fermer</span>
+                    </summary>
+                    <p className="mt-2 text-sm font-semibold text-gray-500">
+                      Ces réglages modifient la couverture, les pages, le PDF et le pack PNG.
+                    </p>
+
+                    <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                      <div>
+                        <p className="mb-2 text-[11px] font-black uppercase tracking-[0.1em] text-gray-500">
+                          Police
+                        </p>
+                        <div className="grid gap-2">
+                          {albumTypographyOptions
+                            .filter((option) =>
+                              (compatibleAlbumOptions.typography as readonly string[]).includes(option.id)
+                            )
+                            .map((option) => (
+                            <button
+                              key={`typography-${option.id}`}
+                              type="button"
+                              onClick={() => setAlbumTypography(option.id)}
+                              className={`rounded-xl border px-4 py-3 text-left transition ${
+                                selectedAlbumTypography.id === option.id
+                                  ? "border-purple-500 bg-purple-50 text-purple-800 shadow-sm"
+                                  : "border-gray-100 bg-white text-gray-600 hover:border-purple-200"
+                              }`}
+                            >
+                              <span className="block break-words text-base font-black leading-tight">
+                                {option.label}
+                              </span>
+                              <span className="mt-1 block break-words text-[11px] font-bold leading-snug">
+                                {option.detail}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="mb-2 text-[11px] font-black uppercase tracking-[0.1em] text-gray-500">
+                          Coins & décor
+                        </p>
+                        <div className="grid gap-2">
+                          {albumOrnamentOptions
+                            .filter((option) =>
+                              (compatibleAlbumOptions.ornaments as readonly string[]).includes(option.id)
+                            )
+                            .map((option) => (
+                            <button
+                              key={`ornament-${option.id}`}
+                              type="button"
+                              onClick={() => setAlbumOrnament(option.id)}
+                              className={`rounded-xl border px-3 py-3 text-left transition ${
+                                selectedAlbumOrnament.id === option.id
+                                  ? "border-purple-500 bg-purple-50 text-purple-800 shadow-sm"
+                                  : "border-gray-100 bg-white text-gray-600 hover:border-purple-200"
+                              }`}
+                            >
+                              <span className={`relative mb-2 block h-12 w-14 overflow-hidden rounded-lg border ${selectedTheme.coverBorderClass} ${selectedTheme.pageClass}`}>
+                                {option.id === "fine" && (
+                                  <>
+                                    <span className="absolute left-1.5 top-1.5 h-4 w-4 border-l-2 border-t-2 border-[#b89453]/70" />
+                                    <span className="absolute bottom-1.5 right-1.5 h-4 w-4 rotate-180 border-l-2 border-t-2 border-[#b89453]/70" />
+                                  </>
+                                )}
+                                {option.id === "editorial" && (
+                                  <>
+                                    <span className="absolute inset-1.5 rounded border border-[#b89453]/55" />
+                                    <span className="absolute inset-2.5 rounded border border-white/80" />
+                                  </>
+                                )}
+                                {option.id === "botanical" && renderAlbumThemeTexture(selectedTheme)}
+                                {option.id === "handline" && (
+                                  <span className="absolute left-2 top-6 h-px w-9 -rotate-3 bg-[#7f8a5f]/70" />
+                                )}
+                              </span>
+                              <span className="block">
+                                <span className="block break-words text-sm font-black leading-tight">{option.label}</span>
+                                <span className="mt-1 block break-words text-[11px] font-bold leading-snug">{option.detail}</span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <p className="mb-2 text-[11px] font-black uppercase tracking-[0.1em] text-gray-500">
+                        Style photo
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {albumPhotoStyleOptions
+                          .filter((option) =>
+                            (compatibleAlbumOptions.photoStyles as readonly string[]).includes(option.id)
+                          )
+                          .map((option) => (
+                            <button
+                              key={`photo-style-${option.id}`}
+                              type="button"
+                              onClick={() => setAlbumPhotoStyle(option.id)}
+                              className={`rounded-xl border px-3 py-3 text-center transition ${
+                                selectedAlbumPhotoStyle.id === option.id
+                                  ? "border-purple-500 bg-purple-50 text-purple-800 shadow-sm"
+                                  : "border-gray-100 bg-white text-gray-600 hover:border-purple-200"
+                              }`}
+                            >
+                              <span className="block break-words text-sm font-black leading-tight">{option.label}</span>
+                              <span className={`mx-auto mt-2 flex h-14 w-16 items-center justify-center rounded-lg ${selectedTheme.pageClass}`}>
+                                <span className={`h-8 w-10 overflow-hidden rounded-md bg-gray-400 ${option.className || selectedTheme.photoFrameClass}`} />
+                              </span>
+                              <span className="mt-2 block">
+                                <span className="block break-words text-[11px] font-bold leading-snug">{option.detail}</span>
+                              </span>
+                            </button>
+                          ))}
+                      </div>
+                    </div>
+                  </details>
+                  </div>
+                </div>
+
+                <div className="grid gap-6 xl:grid-cols-[minmax(340px,0.38fr)_minmax(620px,0.62fr)] xl:items-start">
+                  <div>
 
                   {coverPhoto && (
                     <div className="mt-6 rounded-2xl bg-purple-50 p-4">
@@ -2723,14 +3426,25 @@ export default function AlbumPage() {
                   </div>
                 </div>
 
-                <div className="xl:sticky xl:top-28">
-                  <p className="mb-3 text-sm font-black text-gray-500">
-                    Aperçu de la couverture au format final
-                  </p>
-                  <div className="overflow-x-auto pb-2">
-                    {renderCoverPreview("w-[560px] max-w-none shrink-0")}
+                <div className="order-1 xl:sticky xl:top-28 xl:order-2">
+                  <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-black text-gray-500">
+                        Aperçu de la couverture
+                      </p>
+                      <p className="text-xs font-semibold text-gray-400">
+                        Mode livre par défaut, repères uniquement si nécessaire.
+                      </p>
+                    </div>
+                    {renderPreviewModeSwitch()}
+                  </div>
+                  <div className="rounded-[2rem] bg-[#ece7df] p-4 shadow-inner">
+                    <div className="overflow-x-auto pb-2">
+                      {renderBookCoverPresentation()}
+                    </div>
                   </div>
                 </div>
+              </div>
               </div>
             </section>
 
@@ -2763,20 +3477,15 @@ export default function AlbumPage() {
                 ))}
               </div>
 
-              <label className="mb-6 flex items-center justify-between gap-4 rounded-2xl bg-white px-5 py-4">
-                <span>
-                  <span className="block font-black text-gray-700">Repères d’impression</span>
-                  <span className="block text-sm font-semibold text-gray-500">
-                    Affiche une zone sûre pour éviter les textes trop proches des bords.
+              <div className="mb-6 flex flex-col gap-3 rounded-2xl bg-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span>
+                    <span className="block font-black text-gray-700">Mode d’aperçu</span>
+                    <span className="block text-sm font-semibold text-gray-500">
+                    Choisissez une page seule ou replacée dans le livre ouvert.
+                    </span>
                   </span>
-                </span>
-                <input
-                  type="checkbox"
-                  checked={showPrintGuides}
-                  onChange={(event) => setShowPrintGuides(event.target.checked)}
-                  className="h-5 w-5 accent-purple-600"
-                />
-              </label>
+                {renderPagePreviewModeSwitch()}
+              </div>
 
               <div className="space-y-6">
                 {pages.map((page, pageIndex) => {
@@ -2826,7 +3535,7 @@ export default function AlbumPage() {
                     </div>
                     {renderAlbumJumpNav(`album-page-editor-${page.id}`)}
 
-                    <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_620px] 2xl:items-start">
+                    <div className="grid gap-5 xl:grid-cols-[minmax(340px,0.38fr)_minmax(620px,0.62fr)] xl:items-start">
                       <div>
                         <div className="mb-5">
                           <p className="text-sm font-bold text-gray-600 mb-3">Nombre de photos</p>
@@ -3094,19 +3803,20 @@ export default function AlbumPage() {
                         </div>
                       </div>
 
-                      <div className="2xl:sticky 2xl:top-28">
-                        <p className="mb-3 text-sm font-black text-gray-500">
-                          Aperçu de la page au format final
-                        </p>
-                        <div className="overflow-x-auto rounded-2xl bg-white p-4 pb-2 shadow-sm">
-                          <div className="h-[560px] w-[560px] max-w-none shrink-0 overflow-hidden">
-                            <div
-                              className="origin-top-left"
-                              style={{ transform: "scale(0.7)" }}
-                            >
-                              {renderPrintPageExport(page)}
-                            </div>
+                      <div className="xl:sticky xl:top-28">
+                        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <p className="text-sm font-black text-gray-500">
+                              Aperçu de la page
+                            </p>
+                            <p className="text-xs font-semibold text-gray-400">
+                              Même rendu que le PDF et le pack PNG.
+                            </p>
                           </div>
+                          {renderPagePreviewModeSwitch()}
+                        </div>
+                        <div className="overflow-x-auto rounded-[2rem] bg-[#ece7df] p-4 pb-2 shadow-inner">
+                          {renderOpenBookPresentation(page, pageIndex)}
                         </div>
                       </div>
                     </div>
@@ -3139,6 +3849,9 @@ export default function AlbumPage() {
                 <span className="rounded-full bg-white/70 px-4 py-2 text-xs font-black text-[#7d6245]">
                   {previewPhotoCount} photo(s)
                 </span>
+              </div>
+              <div className="mb-5 flex justify-center">
+                {renderPreviewModeSwitch()}
               </div>
 
               {albumType === "calendar" ? (
@@ -3247,7 +3960,7 @@ export default function AlbumPage() {
               ) : (
               <div className={`rounded-[1.5rem] ${selectedTheme.previewClass} p-4 sm:p-6 shadow-inner`}>
                 <div className="overflow-x-auto pb-2">
-                  {renderCoverPreview("mx-auto w-[560px] max-w-none shrink-0")}
+                  {renderBookCoverPresentation()}
                 </div>
 
                 <div className="mt-5 grid grid-cols-3 gap-3 text-center">
@@ -3257,7 +3970,7 @@ export default function AlbumPage() {
                   </div>
                   <div className="rounded-2xl bg-white/75 p-3">
                     <p className="text-xs font-bold text-gray-500">Pages</p>
-                    <p className="text-xl font-black">{pages.length}</p>
+                    <p className="text-xl font-black">{familyBook.pages.length}</p>
                   </div>
                   <div className="rounded-2xl bg-white/75 p-3">
                     <p className="text-xs font-bold text-gray-500">Format</p>
@@ -3279,7 +3992,7 @@ export default function AlbumPage() {
                     <div>
                       <p className="font-black">Doubles-pages</p>
                       <p className="text-sm font-semibold text-gray-500">
-                        Page 1 à droite, puis pages suivantes.
+                        Page 1 à droite, pages paires à gauche, pages impaires à droite.
                       </p>
                     </div>
                   </div>
@@ -3309,6 +4022,52 @@ export default function AlbumPage() {
                               );
                             }
 
+                            if (slot.kind === "blank") {
+                              return (
+                                <div
+                                  key={`blank-${spreadIndex}-${slotIndex}`}
+                                  className={`min-h-[260px] rounded-2xl ${selectedTheme.pageClass} p-3 shadow-inner`}
+                                >
+                                  <div className={`flex h-[236px] items-center justify-center rounded-xl border border-dashed ${selectedTheme.borderClass} px-4 text-center text-xs font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
+                                    {needsFinalEvenPage
+                                      ? "Ajoutez une dernière page de photos ou laissez cette page vierge avant la couverture arrière."
+                                      : "Page libre"}
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (slot.kind === "inside-back-cover") {
+                              return (
+                                <div
+                                  key={`inside-back-cover-${spreadIndex}-${slotIndex}`}
+                                  className={`min-h-[260px] rounded-2xl ${selectedTheme.pageClass} p-4 shadow-inner`}
+                                >
+                                  <p className="mb-3 text-xs font-black text-gray-400">
+                                    3e de couverture
+                                  </p>
+                                  <div className={`flex h-[210px] items-center justify-center rounded-xl border-2 border-dashed ${selectedTheme.borderClass} px-4 text-center text-xs font-semibold leading-relaxed ${selectedTheme.coverTextClass}`}>
+                                    Page volontairement libre
+                                  </div>
+                                </div>
+                              );
+                            }
+
+                            if (slot.kind === "back-cover") {
+                              return (
+                                <div key={`back-cover-${spreadIndex}-${slotIndex}`}>
+                                  <div className="mx-auto h-[260px] w-[260px] overflow-hidden rounded-2xl shadow-inner">
+                                    <div
+                                      className="origin-top-left"
+                                      style={{ transform: "scale(0.9028)" }}
+                                    >
+                                      {renderBackCoverPage()}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+
                           return (
                             <div key={slot.page.id}>
                               {renderScaledPrintPagePreview(slot.page)}
@@ -3330,6 +4089,19 @@ export default function AlbumPage() {
                         </div>
                       </div>
                     ))}
+                    <div className="rounded-[1.25rem] bg-white/55 p-4 shadow-inner">
+                      <p className="mb-3 text-xs font-black text-gray-400">
+                        4e de couverture
+                      </p>
+                      <div className="mx-auto h-[260px] w-[260px] overflow-hidden rounded-2xl shadow-inner">
+                        <div
+                          className="origin-top-left"
+                          style={{ transform: "scale(0.9028)" }}
+                        >
+                          {renderBackCoverPage()}
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                 </div>
@@ -3347,6 +4119,13 @@ export default function AlbumPage() {
                       <p>
                         {emptyPagesCount === 0 ? "OK" : "À vérifier"} · {emptyPagesCount} page(s) vide(s)
                       </p>
+                      {needsFinalEvenPage ? (
+                        <p className="rounded-xl bg-amber-50 px-3 py-2 font-black text-amber-900">
+                          À compléter · Ajoutez une dernière page de photos ou laissez cette page vierge avant la couverture arrière.
+                        </p>
+                      ) : (
+                        <p>OK · Pagination complète avant la couverture arrière.</p>
+                      )}
                     </div>
                   </div>
 
